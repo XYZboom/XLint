@@ -33,7 +33,7 @@ class KotlinStatisticsProcessor : PsiProcessor, IKotlinProcessor {
         psiFile.accept(ktVisitor)
     }
 
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
         stats.fileNumber++
         stats.lineNumber += file.lineCount
@@ -46,6 +46,7 @@ class KotlinStatisticsProcessor : PsiProcessor, IKotlinProcessor {
         stats = KotlinStatistics()
     }
 
+    context(context: XLintContext)
     override fun onAfterProcess() {
         context.reportStatistics(stats)
         stats = KotlinStatistics()

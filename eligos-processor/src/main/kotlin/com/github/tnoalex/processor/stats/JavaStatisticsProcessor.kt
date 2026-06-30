@@ -27,7 +27,7 @@ class JavaStatisticsProcessor : PsiProcessor, IJavaProcessor {
     override val supportLanguage: List<Language>
         get() = listOf(JavaLanguage)
 
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: PsiJavaFile) {
         stats.fileNumber++
         stats.lineNumber += file.lineCount
@@ -48,6 +48,7 @@ class JavaStatisticsProcessor : PsiProcessor, IJavaProcessor {
         stats = JavaStatistics()
     }
 
+    context(context: XLintContext)
     override fun onAfterProcess() {
         context.reportStatistics(stats)
         stats = JavaStatistics()

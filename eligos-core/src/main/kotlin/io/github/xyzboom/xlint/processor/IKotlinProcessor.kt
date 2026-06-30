@@ -4,6 +4,6 @@ import io.github.xyzboom.xlint.XLintContext
 import org.jetbrains.kotlin.psi.KtFile
 
 interface IKotlinProcessor : IProcessor {
-    context(_: XLintContext)
+    context(context: XLintContext)
     fun process(file: KtFile)
 }
