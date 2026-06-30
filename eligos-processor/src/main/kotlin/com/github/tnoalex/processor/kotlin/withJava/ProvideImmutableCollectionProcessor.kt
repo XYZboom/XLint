@@ -13,6 +13,7 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.*
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -40,6 +41,7 @@ class ProvideImmutableCollectionProcessor : IssueProcessor, IJavaProcessor {
         psiFile.accept(javaFileVisitorVoid)
     }
 
+    context(_: XLintContext)
     override fun process(file: PsiJavaFile) {
         if (context.confidenceLevel > ProvideImmutableCollectionIssue.normal) {
             return

@@ -3,12 +3,11 @@ package com.github.tnoalex.processor.common.kotlin
 import com.github.tnoalex.foundation.LaunchEnvironment
 import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.language.JavaLanguage
 import com.github.tnoalex.foundation.language.KotlinLanguage
 import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.processor.ShareSpace
 import com.github.tnoalex.processor.SubProcessor
-import com.github.tnoalex.processor.common.CircularReferencesProcessor
+import com.github.tnoalex.processor.common.CircularReferencesProcessorOld
 import com.github.tnoalex.processor.utils.refCanNotResolveWarn
 import com.github.tnoalex.processor.utils.referenceExpressionSelfOrInChildren
 import com.intellij.psi.*
@@ -28,10 +27,10 @@ class KotlinCircularReferencesProcessor : SubProcessor {
 
 
     override fun process(psiFile: PsiFile, shareSpace: ShareSpace) {
-        handleKtFile(psiFile as KtFile, shareSpace as CircularReferencesProcessor.CircularReferencesShareSpace)
+        handleKtFile(psiFile as KtFile, shareSpace as CircularReferencesProcessorOld.CircularReferencesShareSpace)
     }
 
-    private fun handleKtFile(ktFile: KtFile, shareSpace: CircularReferencesProcessor.CircularReferencesShareSpace) {
+    private fun handleKtFile(ktFile: KtFile, shareSpace: CircularReferencesProcessorOld.CircularReferencesShareSpace) {
         val fileName = ktFile.virtualFilePath
         shareSpace.shareDependencyGraph.addVertex(fileName)
         ktFile.accept(object : KtTreeVisitorVoid() {

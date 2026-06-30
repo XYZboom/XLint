@@ -12,6 +12,7 @@ import com.github.tnoalex.issues.kotlin.withJava.IncomprehensibleJavaFacadeNameI
 import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -28,6 +29,7 @@ class IncomprehensibleJavaFacadeNameProcessor : IssueProcessor, IKotlinProcessor
     override val severity: Severity = Severity.SUGGESTION
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         process(file as PsiFile)
     }

@@ -14,6 +14,7 @@ import com.github.tnoalex.processor.utils.referenceExpressionSelfOrInChildren
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,6 +31,7 @@ class TailRecursionProcessor : IssueProcessor, IKotlinProcessor {
     override val supportLanguage: List<Language>
         get() = listOf(KotlinLanguage)
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         process(file as PsiFile)
     }

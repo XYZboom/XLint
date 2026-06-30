@@ -35,16 +35,14 @@ class XLintApplication private constructor(
             for (processor in processors) {
                 processor.onBeforeProcess()
             }
-            for (ktSource in compilerEnvContext.ktSourceFiles) {
-                for (processor in processors) {
-                    if (processor is IKotlinProcessor) {
+            with(context) {
+                for (ktSource in compilerEnvContext.ktSourceFiles) {
+                    for (processor in processors.asSequence().filterIsInstance<IKotlinProcessor>()) {
                         processor.process(ktSource)
                     }
                 }
-            }
-            for (javaSource in compilerEnvContext.javaSourceFiles) {
-                for (processor in processors) {
-                    if (processor is IJavaProcessor) {
+                for (javaSource in compilerEnvContext.javaSourceFiles) {
+                    for (processor in processors.asSequence().filterIsInstance<IJavaProcessor>()) {
                         processor.process(javaSource)
                     }
                 }

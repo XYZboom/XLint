@@ -4,7 +4,7 @@ import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.issues.common.UnusedImportIssue
 import com.github.tnoalex.processor.ShareSpace
 import com.github.tnoalex.processor.SubProcessor
-import com.github.tnoalex.processor.common.UnUsedImportProcessor
+import com.github.tnoalex.processor.common.UnUsedImportProcessorOld
 import com.github.tnoalex.processor.utils.refCanNotResolveWarn
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -14,9 +14,9 @@ import java.util.HashSet
 
 @Component
 class JavaUnUsedImportProcessor : SubProcessor {
-    private lateinit var myShareSpace: UnUsedImportProcessor.UnUsedImportProcessorShareSpace
+    private lateinit var myShareSpace: UnUsedImportProcessorOld.UnUsedImportProcessorShareSpace
     override fun process(psiFile: PsiFile, shareSpace: ShareSpace) {
-        myShareSpace = shareSpace as UnUsedImportProcessor.UnUsedImportProcessorShareSpace
+        myShareSpace = shareSpace as UnUsedImportProcessorOld.UnUsedImportProcessorShareSpace
         findJavaUseLessImport(psiFile as PsiJavaFile)
     }
 

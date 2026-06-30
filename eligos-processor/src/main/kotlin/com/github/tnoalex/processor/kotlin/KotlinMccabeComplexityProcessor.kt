@@ -13,6 +13,7 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,6 +33,7 @@ class KotlinMccabeComplexityProcessor : IssueProcessor, IKotlinProcessor {
     private var maxCyclomaticComplexity = 0
     private var currentComplexity = 1
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         process(file as PsiFile)
     }

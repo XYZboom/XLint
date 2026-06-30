@@ -20,6 +20,7 @@ import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -51,6 +52,7 @@ class UncertainNullablePlatformTypeProcessor : IssueProcessor, IKotlinProcessor 
         psiFile.accept(kotlinPropertyVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(kotlinPropertyVisitor)
     }
