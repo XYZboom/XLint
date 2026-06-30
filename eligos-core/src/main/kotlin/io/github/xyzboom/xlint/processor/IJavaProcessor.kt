@@ -4,6 +4,6 @@ import com.intellij.psi.PsiJavaFile
 import io.github.xyzboom.xlint.XLintContext
 
 interface IJavaProcessor : IProcessor {
-    context(_: XLintContext)
+    context(context: XLintContext)
     fun process(file: PsiJavaFile)
 }

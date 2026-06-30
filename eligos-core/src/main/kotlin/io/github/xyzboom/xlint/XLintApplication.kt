@@ -32,10 +32,10 @@ class XLintApplication private constructor(
             } else {
                 providers.flatMap { it.getAllProcessors() }
             }
-            for (processor in processors) {
-                processor.onBeforeProcess()
-            }
             with(context) {
+                for (processor in processors) {
+                    processor.onBeforeProcess()
+                }
                 for (ktSource in compilerEnvContext.ktSourceFiles) {
                     for (processor in processors.asSequence().filterIsInstance<IKotlinProcessor>()) {
                         processor.process(ktSource)
@@ -46,9 +46,9 @@ class XLintApplication private constructor(
                         processor.process(javaSource)
                     }
                 }
-            }
-            for (processor in processors) {
-                processor.onAfterProcess()
+                for (processor in processors) {
+                    processor.onAfterProcess()
+                }
             }
         }
     }
