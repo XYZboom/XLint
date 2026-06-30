@@ -10,14 +10,21 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.*
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IJavaProcessor
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class MissingNullabilityAnnotationProcessor: IssueProcessor {
+@Processor
+class MissingNullabilityAnnotationProcessor: IssueProcessor, IJavaProcessor {
     override val severity: Severity = Severity.SUGGESTION
 
     companion object {
         val annos = listOf("NonNull", "Nullable")
+    }
+
+    override fun process(file: PsiJavaFile) {
+        process(file as PsiFile)
     }
 
     @EventListener(filterClazz = [PsiJavaFile::class])

@@ -23,7 +23,7 @@ fun parseArguments(args: Map<String, Any?>) {
     Reporter(analyzerSpec.formatterSpec).report()
 }
 
-private fun buildSpec(args: HashMap<String, Any?>): AnalyzerSpec {
+fun buildSpec(args: HashMap<String, Any?>): AnalyzerSpec {
     val analyzerSpec: AnalyzerSpec = SpecificationBuilder(args).next(KotlinCompilerSpec::class)
         .withCurrentArtifact("kotlinCompilerSpec")
         .withPartOfCurrentArtifact("srcPathPrefix") { (it as KotlinCompilerSpec).srcPath.toFile().canonicalPath }
@@ -37,7 +37,7 @@ private fun buildSpec(args: HashMap<String, Any?>): AnalyzerSpec {
     return analyzerSpec
 }
 
-private fun initApplication(analyzerSpec: AnalyzerSpec) {
+fun initApplication(analyzerSpec: AnalyzerSpec) {
     val executorPool = Executors.newFixedThreadPool(2)
     val compilerThread = Callable {
         Thread.currentThread().name = "compilerThread"

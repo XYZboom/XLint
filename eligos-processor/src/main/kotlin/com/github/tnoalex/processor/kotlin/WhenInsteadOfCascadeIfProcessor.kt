@@ -5,7 +5,6 @@ import com.github.tnoalex.foundation.LaunchEnvironment
 import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.foundation.bean.Suitable
 import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.JavaLanguage
 import com.github.tnoalex.foundation.language.KotlinLanguage
 import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
@@ -14,6 +13,8 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,7 +23,8 @@ import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class WhenInsteadOfCascadeIfProcessor : IssueProcessor {
+@Processor
+class WhenInsteadOfCascadeIfProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
@@ -34,6 +36,10 @@ class WhenInsteadOfCascadeIfProcessor : IssueProcessor {
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(ifExpressionVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(ifExpressionVisitor)
     }
 
     private val ifExpressionVisitor = object : KtTreeVisitorVoid() {

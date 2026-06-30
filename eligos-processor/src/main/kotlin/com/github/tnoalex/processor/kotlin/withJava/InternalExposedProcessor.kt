@@ -20,19 +20,27 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtFile
 import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class InternalExposedProcessor : IssueProcessor {
+@Processor
+class InternalExposedProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity = Severity.CODE_SMELL
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
     @EventListener(filterClazz = [PsiJavaFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(javaClassVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(javaClassVisitor)
     }
 
     private val javaClassVisitor = object : JavaRecursiveElementVisitor() {

@@ -5,14 +5,19 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.clikt.parameters.types.path
 import com.github.tnoalex.formatter.FormatterTypeEnum
+import com.github.tnoalex.formatter.Reporter
 import com.github.tnoalex.issues.ConfidenceLevel
 import com.github.tnoalex.issues.Severity
+import com.github.tnoalex.parser.CliCompilerEnvironmentContext
+import com.github.tnoalex.utils.StdOutErrWrapper
+import io.github.xyzboom.xlint.XLintApplication
 import java.io.File
 import kotlin.io.path.Path
 import kotlin.reflect.full.declaredMemberProperties
@@ -139,9 +144,27 @@ class EligosCli : CliktCommand(name = "eligos-cli") {
                 "Results with a confidence level greater than or equal to this level will be output"
     ).enum<ConfidenceLevel>(ignoreCase = true) { it.name }.default(ConfidenceLevel.DEFAULT)
 
+    private val enableXLint by option("--enable-xlint")
+        .flag(default = false)
+        .help {
+            "Enable XLint that has not been fully migrated. (experimental)"
+        }
+
     override fun run() {
         val arguments =
             this::class.declaredMemberProperties.associate { it.isAccessible = true; it.name to it.getter.call(this) }
+        if (enableXLint) {
+            StdOutErrWrapper.init()
+            val analyzerSpec = buildSpec(HashMap(arguments))
+            val compiler = CliCompilerEnvironmentContext(analyzerSpec.kotlinCompilerSpec!!)
+            // todo: remove next line after migrating all the code to XLint
+            initApplication(analyzerSpec)
+            val application = XLintApplication(analyzerSpec, compiler)
+            application.run()
+            if (analyzerSpec.debugSpec.notAllowedReport()) return
+            Reporter(analyzerSpec.formatterSpec).report()
+            return
+        }
         parseArguments(arguments)
         exitProcess(0)
     }

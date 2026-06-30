@@ -4,38 +4,39 @@ import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.issues.ConfidenceLevel
 import com.github.tnoalex.issues.Issue
 import com.github.tnoalex.statistics.Statistics
+import io.github.xyzboom.xlint.IContext
 import org.jetbrains.kotlin.analysis.api.KaSession
 import kotlin.reflect.KClass
 
 @Component
-class Context {
+class Context : IContext {
     /**
      * Only allowed to set before analyze
      */
-    var confidenceLevel: ConfidenceLevel = ConfidenceLevel.DEFAULT
-    val issues = HashSet<Issue>()
-    val stats = ArrayList<Statistics>()
-    var session: KaSession? = null
+    override var confidenceLevel: ConfidenceLevel = ConfidenceLevel.DEFAULT
+    override val issues = HashSet<Issue>()
+    override val stats = ArrayList<Statistics>()
+    override lateinit var session: KaSession
 
-    fun reportIssue(issue: Issue) {
+    override fun reportIssue(issue: Issue) {
         // check confidence level that needed
         if (confidenceLevel <= issue.confidenceLevel) {
             issues.add(issue)
         }
     }
 
-    fun reportIssues(issue: List<Issue>) {
+    override fun reportIssues(issue: List<Issue>) {
         issue.forEach {
             reportIssue(it)
         }
     }
 
-    fun resetContext() {
+    override fun resetContext() {
         issues.clear()
         stats.clear()
     }
 
-    fun reportStatistics(statistics: Statistics) {
+    override fun reportStatistics(statistics: Statistics) {
         stats.add(statistics)
     }
 

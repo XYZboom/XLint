@@ -14,25 +14,30 @@ import com.github.tnoalex.issues.kotlin.withJava.optional.ReturnOptionalIssue
 import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.*
 import com.github.tnoalex.processor.utils.filePath
-import com.github.tnoalex.processor.utils.typeCanNotResolveWarn
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.types.*
 import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class OptionalInKotlinProcessor : IssueProcessor {
+@Processor
+class OptionalInKotlinProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity = Severity.CODE_SMELL
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(visitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(visitor)
     }
 
     private val visitor = object : KtTreeVisitorVoid() {

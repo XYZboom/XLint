@@ -5,6 +5,7 @@ import com.github.tnoalex.issues.Issue
 import com.github.tnoalex.parser.CliCompilerEnvironmentContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.IContext
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -26,5 +27,5 @@ private fun visitVirtualFile(virtualFile: VirtualFile, visitor: (file: VirtualFi
 @TestOnly
 @JvmSynthetic
 inline fun <reified T : Issue> issue(): List<T> {
-    return ApplicationContext.getExactBean(Context::class.java)!!.issues.filterIsInstance<T>()
+    return ApplicationContext.getExactBean(IContext::class.java)!!.issues.filterIsInstance<T>()
 }

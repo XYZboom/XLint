@@ -13,6 +13,8 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.*
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IJavaProcessor
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -25,7 +27,8 @@ import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class ProvideImmutableCollectionProcessor : IssueProcessor {
+@Processor
+class ProvideImmutableCollectionProcessor : IssueProcessor, IJavaProcessor {
     override val severity: Severity = Severity.CODE_SMELL
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
@@ -35,6 +38,13 @@ class ProvideImmutableCollectionProcessor : IssueProcessor {
             return
         }
         psiFile.accept(javaFileVisitorVoid)
+    }
+
+    override fun process(file: PsiJavaFile) {
+        if (context.confidenceLevel > ProvideImmutableCollectionIssue.normal) {
+            return
+        }
+        file.accept(javaFileVisitorVoid)
     }
 
     private val javaFileVisitorVoid = object : JavaRecursiveElementVisitor() {
