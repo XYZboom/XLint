@@ -44,6 +44,11 @@ class KotlinStatisticsProcessor : PsiProcessor, IKotlinProcessor {
         stats = KotlinStatistics()
     }
 
+    override fun onAfterProcess() {
+        context.reportStatistics(stats)
+        stats = KotlinStatistics()
+    }
+
     private val ktVisitor = object : KtTreeVisitorVoid() {
         override fun visitClass(klass: KtClass) {
             stats.classNumber++
