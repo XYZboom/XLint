@@ -46,6 +46,11 @@ class JavaStatisticsProcessor : PsiProcessor, IJavaProcessor {
         stats = JavaStatistics()
     }
 
+    override fun onAfterProcess() {
+        context.reportStatistics(stats)
+        stats = JavaStatistics()
+    }
+
     private val javaVisitor = object : JavaRecursiveElementVisitor() {
         override fun visitClass(aClass: PsiClass) {
             stats.classNumber++
