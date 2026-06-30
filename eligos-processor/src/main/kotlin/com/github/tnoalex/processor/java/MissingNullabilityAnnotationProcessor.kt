@@ -10,6 +10,7 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.*
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 
@@ -23,6 +24,7 @@ class MissingNullabilityAnnotationProcessor: IssueProcessor, IJavaProcessor {
         val annos = listOf("NonNull", "Nullable")
     }
 
+    context(_: XLintContext)
     override fun process(file: PsiJavaFile) {
         process(file as PsiFile)
     }

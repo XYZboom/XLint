@@ -1,4 +1,5 @@
 import java.time.ZonedDateTime
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 dependencies {
     api("org.jgrapht:jgrapht-core:1.5.2")
@@ -25,9 +26,9 @@ tasks.register("writeProperties") {
             "$key=$value"
         }
 
-        val resourceDir =  sourceSets.main.get().resources.srcDirs.first()
+        val resourceDir = sourceSets.main.get().resources.srcDirs.first()
         val propertyFile = File(resourceDir, "eligos-meta.properties")
-        if(!propertyFile.exists()){
+        if (!propertyFile.exists()) {
             propertyFile.createNewFile()
         }
 
@@ -37,4 +38,8 @@ tasks.register("writeProperties") {
 
 tasks.getByName("compileJava") {
     dependsOn("writeProperties")
+}
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.compilerOptions {
+    freeCompilerArgs.set(listOf("-Xcontext-parameters"))
 }

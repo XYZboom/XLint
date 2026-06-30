@@ -14,6 +14,7 @@ import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -37,6 +38,7 @@ class NonJVMStaticCompanionFunctionProcessor : IssueProcessor, IKotlinProcessor 
         psiFile.accept(companionObjectVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(companionObjectVisitor)
     }

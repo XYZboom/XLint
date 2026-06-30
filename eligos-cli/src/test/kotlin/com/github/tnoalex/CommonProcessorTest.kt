@@ -6,9 +6,9 @@ import com.github.tnoalex.foundation.RequireTestProcessor
 import com.github.tnoalex.issues.common.CircularReferencesIssue
 import com.github.tnoalex.issues.common.ExcessiveParamsIssue
 import com.github.tnoalex.issues.common.UnusedImportIssue
-import com.github.tnoalex.processor.common.CircularReferencesProcessor
-import com.github.tnoalex.processor.common.TooManyParametersProcessor
-import com.github.tnoalex.processor.common.UnUsedImportProcessor
+import com.github.tnoalex.processor.common.CircularReferencesProcessorOld
+import com.github.tnoalex.processor.common.TooManyParametersProcessorOld
+import com.github.tnoalex.processor.common.UnUsedImportProcessorOld
 import com.github.tnoalex.processor.common.java.JavaCircularReferencesProcessor
 import com.github.tnoalex.processor.common.java.JavaTooManyParametersProcessor
 import com.github.tnoalex.processor.common.java.JavaUnUsedImportProcessor
@@ -33,7 +33,7 @@ class CommonProcessorTest {
         "resources@toomanyParams",
         [TooManyParametersProcessorProvider::class, KotlinTooManyParametersProcessor::class, JavaTooManyParametersProcessor::class]
     )
-    fun testTooManyParameters(processor: TooManyParametersProcessor) {
+    fun testTooManyParameters(processor: TooManyParametersProcessorOld) {
         psiFiles().forEach { psiFile ->
             processor.process(psiFile)
         }
@@ -57,7 +57,7 @@ class CommonProcessorTest {
         "resources@circularRceferences",
         [CircularReferencesProcessorProvider::class, JavaCircularReferencesProcessor::class, KotlinCircularReferencesProcessor::class]
     )
-    fun testCircularReferences(processor: CircularReferencesProcessor) {
+    fun testCircularReferences(processor: CircularReferencesProcessorOld) {
         psiFiles().forEach { psiFile ->
             processor.process(psiFile)
         }
@@ -86,7 +86,7 @@ class CommonProcessorTest {
         "resources@unusedImport",
         [UnUsedImportProcessorProvider::class, JavaUnUsedImportProcessor::class, KotlinUnUsedImportProcessor::class]
     )
-    fun testUnUsedImport(processor: UnUsedImportProcessor) {
+    fun testUnUsedImport(processor: UnUsedImportProcessorOld) {
         psiFiles().forEach { psiFile ->
             processor.process(psiFile)
         }

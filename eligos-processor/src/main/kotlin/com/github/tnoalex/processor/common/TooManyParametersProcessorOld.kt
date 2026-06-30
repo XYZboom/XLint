@@ -19,7 +19,7 @@ import java.util.*
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class TooManyParametersProcessor : AbstractCommonProcessor() {
+class TooManyParametersProcessorOld : AbstractCommonProcessor() {
     override val severity: Severity = Severity.CODE_SMELL
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 

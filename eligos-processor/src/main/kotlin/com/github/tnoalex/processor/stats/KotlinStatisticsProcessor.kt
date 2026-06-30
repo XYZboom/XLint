@@ -11,6 +11,7 @@ import com.github.tnoalex.processor.PsiProcessor
 import com.github.tnoalex.processor.utils.lineCount
 import com.github.tnoalex.statistics.KotlinStatistics
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.psi.*
@@ -32,6 +33,7 @@ class KotlinStatisticsProcessor : PsiProcessor, IKotlinProcessor {
         psiFile.accept(ktVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         stats.fileNumber++
         stats.lineNumber += file.lineCount

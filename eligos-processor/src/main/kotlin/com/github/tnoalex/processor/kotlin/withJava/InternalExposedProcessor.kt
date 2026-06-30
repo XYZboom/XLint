@@ -20,6 +20,7 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -39,6 +40,7 @@ class InternalExposedProcessor : IssueProcessor, IKotlinProcessor {
         psiFile.accept(javaClassVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(javaClassVisitor)
     }

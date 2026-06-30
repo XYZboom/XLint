@@ -1,4 +1,3 @@
-/*
 package com.github.tnoalex.processor.common
 
 import com.github.tnoalex.events.AllFileParsedEvent
@@ -16,8 +15,6 @@ import com.github.tnoalex.processor.ShareSpace
 import com.github.tnoalex.processor.common.providers.CircularReferencesProcessorProvider
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import io.github.xyzboom.xlint.processor.IJavaProcessor
-import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,10 +25,25 @@ import org.jgrapht.graph.builder.GraphTypeBuilder
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class CircularReferencesProcessor : IJavaProcessor, IKotlinProcessor {
+class CircularReferencesProcessorOld : AbstractCommonProcessor() {
     override val severity: Severity = Severity.CODE_SMELL
 
-    private val dependencyGraph = newEmptyGraph()
+    override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
+
+    private var dependencyGraph = newEmptyGraph()
+
+    @InjectBean(beanType = CircularReferencesProcessorProvider::class)
+    override lateinit var processorProvider: AbstractSpecificProcessorProvider
+
+    private val myShareSpace = CircularReferencesShareSpace()
+
+
+    override fun createShearSpace(): ShareSpace = myShareSpace
+
+    @EventListener(filterClazz = [PsiJavaFile::class, KtFile::class])
+    override fun process(psiFile: PsiFile) {
+        invokeSpecificProcessor(psiFile)
+    }
 
     @EventListener
     fun resultGeneration(@Suppress("UNUSED_PARAMETER") event: AllFileParsedEvent) {
@@ -78,4 +90,4 @@ class CircularReferencesProcessor : IJavaProcessor, IKotlinProcessor {
             dependencyGraph.addEdge(providerFile, consumeFile)
         }
     }
-}*/
+}

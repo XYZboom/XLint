@@ -21,7 +21,7 @@ import java.util.*
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class UnUsedImportProcessor : AbstractCommonProcessor() {
+class UnUsedImportProcessorOld : AbstractCommonProcessor() {
     private val issues = LinkedList<UnusedImportIssue>()
 
     @InjectBean(beanType = UnUsedImportProcessorProvider::class)

@@ -13,6 +13,7 @@ import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.psi.*
@@ -33,6 +34,7 @@ class ImplicitSingleExprFunctionProcessor : IssueProcessor, IKotlinProcessor {
         psiFile.accept(singleExprFunctionVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(singleExprFunctionVisitor)
     }

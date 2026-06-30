@@ -15,6 +15,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 
@@ -26,6 +27,7 @@ class JavaStatisticsProcessor : PsiProcessor, IJavaProcessor {
     override val supportLanguage: List<Language>
         get() = listOf(JavaLanguage)
 
+    context(_: XLintContext)
     override fun process(file: PsiJavaFile) {
         stats.fileNumber++
         stats.lineNumber += file.lineCount

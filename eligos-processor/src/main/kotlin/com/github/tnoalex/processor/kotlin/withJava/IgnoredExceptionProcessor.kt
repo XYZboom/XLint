@@ -15,6 +15,7 @@ import com.github.tnoalex.processor.utils.refCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
@@ -46,10 +47,12 @@ class IgnoredExceptionProcessor : IssueProcessor, IJavaProcessor, IKotlinProcess
         }
     }
 
+    context(_: XLintContext)
     override fun process(file: PsiJavaFile) {
         file.accept(javaCallExpressionVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(ktApiVisitor)
     }

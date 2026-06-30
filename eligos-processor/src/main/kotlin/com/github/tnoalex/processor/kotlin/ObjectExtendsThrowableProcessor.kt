@@ -13,6 +13,7 @@ import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.superTypes
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -36,6 +37,7 @@ class ObjectExtendsThrowableProcessor : IssueProcessor, IKotlinProcessor {
         psiFile.accept(objectVisitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(objectVisitor)
     }

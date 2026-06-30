@@ -15,6 +15,7 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.*
 import com.github.tnoalex.processor.utils.filePath
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -36,6 +37,7 @@ class OptionalInKotlinProcessor : IssueProcessor, IKotlinProcessor {
         psiFile.accept(visitor)
     }
 
+    context(_: XLintContext)
     override fun process(file: KtFile) {
         file.accept(visitor)
     }

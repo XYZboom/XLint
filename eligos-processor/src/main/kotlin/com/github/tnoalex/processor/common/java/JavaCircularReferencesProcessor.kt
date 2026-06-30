@@ -4,11 +4,10 @@ import com.github.tnoalex.foundation.LaunchEnvironment
 import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.foundation.bean.Suitable
 import com.github.tnoalex.foundation.language.JavaLanguage
-import com.github.tnoalex.foundation.language.KotlinLanguage
 import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.processor.ShareSpace
 import com.github.tnoalex.processor.SubProcessor
-import com.github.tnoalex.processor.common.CircularReferencesProcessor
+import com.github.tnoalex.processor.common.CircularReferencesProcessorOld
 import com.github.tnoalex.processor.utils.refCanNotResolveWarn
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -21,12 +20,12 @@ class JavaCircularReferencesProcessor : SubProcessor {
         get() = listOf(JavaLanguage)
 
     override fun process(psiFile: PsiFile, shareSpace: ShareSpace) {
-        handleJavaFile(psiFile as PsiJavaFile, shareSpace as CircularReferencesProcessor.CircularReferencesShareSpace)
+        handleJavaFile(psiFile as PsiJavaFile, shareSpace as CircularReferencesProcessorOld.CircularReferencesShareSpace)
     }
 
     private fun handleJavaFile(
         javaFile: PsiJavaFile,
-        shareSpace: CircularReferencesProcessor.CircularReferencesShareSpace
+        shareSpace: CircularReferencesProcessorOld.CircularReferencesShareSpace
     ) {
         val fileName = javaFile.virtualFile.path
         shareSpace.shareDependencyGraph.addVertex(fileName)

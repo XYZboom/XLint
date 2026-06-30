@@ -4,7 +4,7 @@ import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.issues.common.ExcessiveParamsIssue
 import com.github.tnoalex.processor.ShareSpace
 import com.github.tnoalex.processor.SubProcessor
-import com.github.tnoalex.processor.common.TooManyParametersProcessor
+import com.github.tnoalex.processor.common.TooManyParametersProcessorOld
 
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory
 
 @Component
 class KotlinTooManyParametersProcessor : SubProcessor {
-    private lateinit var shareSpace: TooManyParametersProcessor.TooManyParametersShareSpace
+    private lateinit var shareSpace: TooManyParametersProcessorOld.TooManyParametersShareSpace
     override fun process(psiFile: PsiFile, shareSpace: ShareSpace) {
-        this.shareSpace = shareSpace as TooManyParametersProcessor.TooManyParametersShareSpace
+        this.shareSpace = shareSpace as TooManyParametersProcessorOld.TooManyParametersShareSpace
         psiFile.accept(kotlinFunctionVisitor())
     }
 
