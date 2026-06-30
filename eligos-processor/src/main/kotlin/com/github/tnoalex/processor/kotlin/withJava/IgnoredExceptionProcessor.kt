@@ -15,6 +15,9 @@ import com.github.tnoalex.processor.utils.refCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IJavaProcessor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
@@ -30,7 +33,8 @@ import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class IgnoredExceptionProcessor : IssueProcessor {
+@Processor
+class IgnoredExceptionProcessor : IssueProcessor, IJavaProcessor, IKotlinProcessor {
     override val severity: Severity = Severity.CODE_SMELL
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
@@ -40,6 +44,14 @@ class IgnoredExceptionProcessor : IssueProcessor {
             is KtFile -> psiFile.accept(ktApiVisitor)
             is PsiJavaFile -> psiFile.accept(javaCallExpressionVisitor)
         }
+    }
+
+    override fun process(file: PsiJavaFile) {
+        file.accept(javaCallExpressionVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(ktApiVisitor)
     }
 
     private val ktApiVisitor = object : KtTreeVisitorVoid() {

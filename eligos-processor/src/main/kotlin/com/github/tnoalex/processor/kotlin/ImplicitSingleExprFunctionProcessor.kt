@@ -13,13 +13,16 @@ import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.psi.*
 import org.slf4j.LoggerFactory
 
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class ImplicitSingleExprFunctionProcessor : IssueProcessor {
+@Processor
+class ImplicitSingleExprFunctionProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
@@ -28,6 +31,10 @@ class ImplicitSingleExprFunctionProcessor : IssueProcessor {
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(singleExprFunctionVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(singleExprFunctionVisitor)
     }
 
     private val singleExprFunctionVisitor = object : KtTreeVisitorVoid(){

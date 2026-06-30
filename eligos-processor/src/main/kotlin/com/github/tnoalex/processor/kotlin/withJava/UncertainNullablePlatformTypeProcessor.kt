@@ -20,6 +20,8 @@ import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -39,13 +41,18 @@ import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class UncertainNullablePlatformTypeProcessor : IssueProcessor {
+@Processor
+class UncertainNullablePlatformTypeProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity = Severity.CODE_SMELL
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(kotlinPropertyVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(kotlinPropertyVisitor)
     }
 
     @OptIn(KaExperimentalApi::class)

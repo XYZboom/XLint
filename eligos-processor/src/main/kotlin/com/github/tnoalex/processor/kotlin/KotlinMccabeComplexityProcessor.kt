@@ -5,7 +5,6 @@ import com.github.tnoalex.foundation.LaunchEnvironment
 import com.github.tnoalex.foundation.bean.Component
 import com.github.tnoalex.foundation.bean.Suitable
 import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.JavaLanguage
 import com.github.tnoalex.foundation.language.KotlinLanguage
 import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
@@ -14,13 +13,16 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class KotlinMccabeComplexityProcessor : IssueProcessor {
+@Processor
+class KotlinMccabeComplexityProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
@@ -29,6 +31,10 @@ class KotlinMccabeComplexityProcessor : IssueProcessor {
     @InjectConfig("function.maxCyclomaticComplexity")
     private var maxCyclomaticComplexity = 0
     private var currentComplexity = 1
+
+    override fun process(file: KtFile) {
+        process(file as PsiFile)
+    }
 
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {

@@ -3,6 +3,7 @@ package com.github.tnoalex.foundation
 import com.github.tnoalex.Context
 import com.github.tnoalex.foundation.bean.container.SimpleSingletonBeanContainer
 import com.github.tnoalex.parser.CliCompilerEnvironmentContext
+import io.github.xyzboom.xlint.IContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -16,7 +17,7 @@ import java.lang.reflect.Method
 class EligosForEachTestExtension : BeforeEachCallback, AfterEachCallback, InvocationInterceptor {
 
     override fun beforeEach(context: ExtensionContext) {
-        ApplicationContext.addBean(Context::class.simpleName!!, Context(), SimpleSingletonBeanContainer)
+        ApplicationContext.addBean(IContext::class.simpleName!!, Context(), SimpleSingletonBeanContainer)
         ApplicationContext.invokeAfterBeansRegisterHandler()
     }
 
@@ -28,7 +29,7 @@ class EligosForEachTestExtension : BeforeEachCallback, AfterEachCallback, Invoca
         }
         val testProcessor = requireTestParams.type.kotlin
         ApplicationContext.removeBeanOfType(testProcessor.java)
-        ApplicationContext.removeBeanOfType(Context::class.java)
+        ApplicationContext.removeBeanOfType(IContext::class.java)
         ApplicationContext.removeBeanOfType(DataFlowValueFactory::class.java)
         ApplicationContext.getExactBean(CliCompilerEnvironmentContext::class.java)!!.close()
         ApplicationContext.removeBeanOfType(CliCompilerEnvironmentContext::class.java)
@@ -41,10 +42,9 @@ class EligosForEachTestExtension : BeforeEachCallback, AfterEachCallback, Invoca
     ) {
         val env = ApplicationContext.getExactBean(CliCompilerEnvironmentContext::class.java)!!
         analyze(env.module) {
-            val ctx = ApplicationContext.getExactBean(Context::class.java)!!
+            val ctx = ApplicationContext.getExactBean(IContext::class.java)!!
             ctx.session = this
             invocation.proceed()
-            ctx.session = null
         }
     }
 
@@ -55,10 +55,9 @@ class EligosForEachTestExtension : BeforeEachCallback, AfterEachCallback, Invoca
     ) {
         val env = ApplicationContext.getExactBean(CliCompilerEnvironmentContext::class.java)!!
         analyze(env.module) {
-            val ctx = ApplicationContext.getExactBean(Context::class.java)!!
+            val ctx = ApplicationContext.getExactBean(IContext::class.java)!!
             ctx.session = this
             invocation.proceed()
-            ctx.session = null
         }
     }
 }

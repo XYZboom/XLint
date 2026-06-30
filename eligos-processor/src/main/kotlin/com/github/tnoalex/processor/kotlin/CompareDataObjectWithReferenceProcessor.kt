@@ -12,6 +12,8 @@ import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -26,7 +28,8 @@ import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class CompareDataObjectWithReferenceProcessor : IssueProcessor {
+@Processor
+class CompareDataObjectWithReferenceProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
@@ -35,6 +38,10 @@ class CompareDataObjectWithReferenceProcessor : IssueProcessor {
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(compareExpressionVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(compareExpressionVisitor)
     }
 
     private val compareExpressionVisitor = object : KtTreeVisitorVoid() {

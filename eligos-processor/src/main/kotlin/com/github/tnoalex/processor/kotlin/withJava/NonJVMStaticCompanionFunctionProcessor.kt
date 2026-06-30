@@ -14,6 +14,8 @@ import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
@@ -25,13 +27,18 @@ import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class NonJVMStaticCompanionFunctionProcessor : IssueProcessor {
+@Processor
+class NonJVMStaticCompanionFunctionProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity = Severity.SUGGESTION
     override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
 
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {
         psiFile.accept(companionObjectVisitor)
+    }
+
+    override fun process(file: KtFile) {
+        file.accept(companionObjectVisitor)
     }
 
     private val companionObjectVisitor = object : KtTreeVisitorVoid() {

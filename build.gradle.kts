@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.4.0"
+    id("com.google.devtools.ksp") version "2.3.9" apply false
 }
 
 repositories {

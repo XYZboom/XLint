@@ -14,6 +14,8 @@ import com.github.tnoalex.processor.utils.referenceExpressionSelfOrInChildren
 import com.github.tnoalex.processor.utils.startLine
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.slf4j.LoggerFactory
@@ -21,11 +23,16 @@ import org.slf4j.LoggerFactory
 
 @Component
 @Suitable(LaunchEnvironment.CLI)
-class TailRecursionProcessor : IssueProcessor {
+@Processor
+class TailRecursionProcessor : IssueProcessor, IKotlinProcessor {
     override val severity: Severity
         get() = Severity.SUGGESTION
     override val supportLanguage: List<Language>
         get() = listOf(KotlinLanguage)
+
+    override fun process(file: KtFile) {
+        process(file as PsiFile)
+    }
 
     @EventListener(filterClazz = [KtFile::class])
     override fun process(psiFile: PsiFile) {

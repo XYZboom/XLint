@@ -10,10 +10,13 @@ import com.intellij.openapi.vfs.local.CoreLocalVirtualFile
 import com.intellij.pom.PomModel
 import com.intellij.pom.tree.TreeAspect
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
+import io.github.xyzboom.xlint.compiler.ICompilerEnvContext
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
@@ -37,16 +40,18 @@ import org.jetbrains.kotlin.cli.jvm.configureAdvancedJvmOptions
 import org.jetbrains.kotlin.cli.jvm.setupJvmSpecificArguments
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.io.OutputStream
 import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import kotlin.collections.filterIsInstance
 import kotlin.io.path.Path
 
 class CliCompilerEnvironmentContext(compilerSpec: KotlinCompilerSpec) :
-    AutoCloseable {
+    AutoCloseable, ICompilerEnvContext {
     private val fileSystem: CoreLocalFileSystem = CoreLocalFileSystem()
     private val disposable: Disposable = Disposer.newDisposable()
     private val configuration: CompilerConfiguration = createCompilerConfiguration(
@@ -79,13 +84,19 @@ class CliCompilerEnvironmentContext(compilerSpec: KotlinCompilerSpec) :
     val baseDir: VirtualFile
 
     val allSourceFiles: List<PsiFile> by lazy {
-        ktSourceFiles.filterIsInstance<PsiFile>() + javaSourceFiles
+        ktSourceFiles + javaSourceFiles
+    }
+
+    override fun runAnalyze(action: KaSession.() -> Unit) {
+        analyze(module, action)
     }
 
     @OptIn(KaExperimentalApi::class)
-    val ktSourceFiles: List<PsiFileSystemItem> get() = sourceModule.psiRoots
+    override val ktSourceFiles: List<KtFile> by lazy {
+        sourceModule.psiRoots.filterIsInstance<KtFile>()
+    }
 
-    val javaSourceFiles: List<PsiFile> by lazy {
+    override val javaSourceFiles: List<PsiJavaFile> by lazy {
         baseDir.refresh(false, true)
         val psiManager = project.getService(PsiManager::class.java)
 
@@ -99,12 +110,12 @@ class CliCompilerEnvironmentContext(compilerSpec: KotlinCompilerSpec) :
             }
         }
 
-        val result = mutableListOf<PsiFile>()
+        val result = mutableListOf<PsiJavaFile>()
 
         visitVirtualFile(baseDir) {
             if (it.extension == "java") {
                 psiManager.findFile(it)?.let { it1 ->
-                    result.add(it1)
+                    if (it1 is PsiJavaFile) result.add(it1)
                 }
             }
         }

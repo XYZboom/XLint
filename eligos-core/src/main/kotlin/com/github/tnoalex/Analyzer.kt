@@ -6,11 +6,12 @@ import com.github.tnoalex.parser.FileDistributor
 import com.github.tnoalex.processor.PsiProcessor
 import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.specs.AnalyzerSpec
+import io.github.xyzboom.xlint.IContext
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
 class Analyzer(private val analyzerSpec: AnalyzerSpec) {
-    val context: Context = ApplicationContext.getExactBean(Context::class.java)!!.also {
+    val context: IContext = ApplicationContext.getExactBean(IContext::class.java)!!.also {
         it.confidenceLevel = analyzerSpec.confidenceLevel
     }
     private var analyzerInitialized = false

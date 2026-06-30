@@ -12,6 +12,7 @@ import com.github.tnoalex.issues.kotlin.withJava.nonnullAssertion.NonNullAsserti
 import com.github.tnoalex.issues.kotlin.withJava.nonnullAssertion.NonNullAssertionOnPlatformTypeIssue
 import com.github.tnoalex.processor.kotlin.withJava.*
 import com.intellij.psi.PsiJavaFile
+import io.github.xyzboom.xlint.IContext
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtendWith
@@ -315,7 +316,7 @@ class KotlinWithJavaProcessorTest {
 
     @RequireTestProcessor("resources@nonnullAssertionOnNullableType")
     fun testNonNullAssertionOnNullableType(processor: UncertainNullablePlatformTypeProcessor) {
-        ApplicationContext.getExactBean(Context::class.java)!!.confidenceLevel =
+        ApplicationContext.getExactBean(IContext::class.java)!!.confidenceLevel =
             ConfidenceLevel.EXTREMELY_LOW
         psiFiles().forEach { psiFile ->
             if (psiFile is KtFile) {
