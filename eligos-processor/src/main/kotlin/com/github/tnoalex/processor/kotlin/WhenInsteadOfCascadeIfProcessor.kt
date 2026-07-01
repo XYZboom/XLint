@@ -1,6 +1,5 @@
 package com.github.tnoalex.processor.kotlin
 
-import com.github.tnoalex.config.InjectConfig
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.WhenInsteadOfCascadeIfIssue
 import com.github.tnoalex.processor.utils.filePath
@@ -8,6 +7,7 @@ import com.github.tnoalex.processor.utils.startLine
 import com.intellij.lang.Language
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.config.ConfigProvider
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -23,9 +23,11 @@ class WhenInsteadOfCascadeIfProcessor : IKotlinProcessor {
     override val supportLanguage: List<Language>
         get() = listOf(KotlinLanguage.INSTANCE)
 
-    // todo: migrate this
-    @InjectConfig("expression.ifCascadeDepth")
-    private var maxCascadeIfDepth = 0
+    private var maxCascadeIfDepth = 3
+
+    override fun configure(config: ConfigProvider) {
+        this.maxCascadeIfDepth = config.getInt("expression.ifCascadeDepth", 3)
+    }
 
     context(context: XLintContext)
     override fun process(file: KtFile) {
