@@ -160,9 +160,9 @@ class EligosCli : CliktCommand(name = "eligos-cli") {
             // todo: remove next line after migrating all the code to XLint
             initApplication(analyzerSpec)
             val application = XLintApplication(analyzerSpec, compiler)
-            application.run()
+            val context = application.run()
             if (analyzerSpec.debugSpec.notAllowedReport()) return
-            Reporter(analyzerSpec.formatterSpec).report()
+            Reporter(analyzerSpec.formatterSpec, context).report()
             return
         }
         parseArguments(arguments)

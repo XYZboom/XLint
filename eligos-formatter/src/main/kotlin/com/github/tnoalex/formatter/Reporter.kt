@@ -1,15 +1,15 @@
 package com.github.tnoalex.formatter
 
 import com.github.tnoalex.EligosCoreBundle
-import com.github.tnoalex.foundation.ApplicationContext
 import com.github.tnoalex.specs.FormatterSpec
 import io.github.xyzboom.xlint.IContext
 import org.slf4j.LoggerFactory
 import java.time.ZonedDateTime
 
-class Reporter(private val formatterSpec: FormatterSpec) {
+class Reporter(private val formatterSpec: FormatterSpec, private val context: IContext) {
 
     private val currentFormatter = getFormatter(formatterSpec.resultFormat)
+
     fun report() {
         val summary = summary()
         val formatted = format(summary)
@@ -24,7 +24,6 @@ class Reporter(private val formatterSpec: FormatterSpec) {
 
     private fun summary(): HashMap<String, out Any> {
         logger.info("Build summary")
-        val context = ApplicationContext.getBeanOfType(IContext::class.java).first()
         val summary = LinkedHashMap<String, Any>()
         summary["MetaInfo"] = getMetaInfo()
         val statistics = LinkedHashMap<String, HashMap<String, out Any>>()
