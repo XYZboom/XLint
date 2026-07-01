@@ -1,6 +1,5 @@
 package com.github.tnoalex.processor.kotlin
 
-import com.github.tnoalex.config.InjectConfig
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.ComplexKotlinFunctionIssue
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
@@ -8,6 +7,7 @@ import com.github.tnoalex.processor.utils.startLine
 import com.intellij.lang.Language
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.config.ConfigProvider
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -21,10 +21,12 @@ class KotlinMccabeComplexityProcessor : IKotlinProcessor {
     override val supportLanguage: List<Language>
         get() = listOf(KotlinLanguage.INSTANCE)
 
-    // todo: migrate this
-    @InjectConfig("function.maxCyclomaticComplexity")
-    private var maxCyclomaticComplexity = 0
+    private var maxCyclomaticComplexity = 10
     private var currentComplexity = 1
+
+    override fun configure(config: ConfigProvider) {
+        this.maxCyclomaticComplexity = config.getInt("function.maxCyclomaticComplexity", 10)
+    }
 
     context(context: XLintContext)
     override fun process(file: KtFile) {

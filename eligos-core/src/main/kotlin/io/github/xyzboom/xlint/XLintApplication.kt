@@ -4,6 +4,7 @@ import com.github.tnoalex.foundation.ApplicationContext
 import com.github.tnoalex.foundation.bean.container.SimpleSingletonBeanContainer
 import com.github.tnoalex.specs.AnalyzerSpec
 import io.github.xyzboom.xlint.compiler.ICompilerEnvContext
+import io.github.xyzboom.xlint.config.loadConfig
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import io.github.xyzboom.xlint.processor.IProcessorProvider
@@ -32,6 +33,13 @@ class XLintApplication private constructor(
             } else {
                 providers.flatMap { it.getAllProcessors() }
             }
+
+            // Load config once and inject into each processor
+            val config = loadConfig(analyzerSpec.extendRulePath)
+            for (processor in processors) {
+                processor.configure(config)
+            }
+
             with(context) {
                 for (processor in processors) {
                     processor.onBeforeProcess()

@@ -1,6 +1,5 @@
 package com.github.tnoalex.processor.common
 
-import com.github.tnoalex.config.InjectConfig
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.common.ExcessiveParamsIssue
 import com.github.tnoalex.processor.utils.filePath
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
+import io.github.xyzboom.xlint.config.ConfigProvider
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -28,8 +28,11 @@ class TooManyParametersProcessor : IJavaProcessor, IKotlinProcessor {
     override val supportLanguage: List<Language>
         get() = listOf(JavaLanguage.INSTANCE, KotlinLanguage.INSTANCE)
 
-    @InjectConfig("function.arity")
-    private var arity: Int = 0
+    private var arity: Int = 6
+
+    override fun configure(config: ConfigProvider) {
+        this.arity = config.getInt("function.arity", 6)
+    }
 
     context(context: XLintContext)
     override fun process(file: PsiJavaFile) {
