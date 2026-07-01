@@ -1,3 +1,4 @@
+/*
 package com.github.tnoalex.processor.common.java
 
 import com.github.tnoalex.foundation.bean.Component
@@ -59,4 +60,4 @@ class JavaUnUsedImportProcessor : SubProcessor {
     companion object {
         private val logger = LoggerFactory.getLogger(JavaUnUsedImportProcessor::class.java)
     }
-}
+}*/

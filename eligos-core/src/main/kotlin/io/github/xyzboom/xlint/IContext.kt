@@ -10,8 +10,8 @@ import org.jetbrains.kotlin.analysis.api.KaSession
  */
 interface IContext {
     var session: KaSession
-    val issues: HashSet<Issue>
-    val stats: ArrayList<Statistics>
+    val issues: Set<Issue>
+    val stats: List<Statistics>
 
     /**
      * todo: confidenceLevel should be val after migration to XLint

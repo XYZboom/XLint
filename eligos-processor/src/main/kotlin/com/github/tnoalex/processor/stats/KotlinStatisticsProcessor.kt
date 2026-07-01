@@ -1,49 +1,26 @@
 package com.github.tnoalex.processor.stats
 
-import com.github.tnoalex.events.AllFileParsedEvent
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
-import com.github.tnoalex.processor.PsiProcessor
 import com.github.tnoalex.processor.utils.lineCount
 import com.github.tnoalex.statistics.KotlinStatistics
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 
 
-@Component(order = -1)
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class KotlinStatisticsProcessor : PsiProcessor, IKotlinProcessor {
+class KotlinStatisticsProcessor : IKotlinProcessor {
     private var stats = KotlinStatistics()
     override val supportLanguage: List<Language>
-        get() = listOf(KotlinLanguage)
-
-    @EventListener(order = -1, filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile as KtFile
-        stats.fileNumber++
-        stats.lineNumber += psiFile.lineCount
-        psiFile.accept(ktVisitor)
-    }
+        get() = listOf(KotlinLanguage.INSTANCE)
 
     context(context: XLintContext)
     override fun process(file: KtFile) {
         stats.fileNumber++
         stats.lineNumber += file.lineCount
         file.accept(ktVisitor)
-    }
-
-    @EventListener(order = -1)
-    fun onFileFinishEvent(event: AllFileParsedEvent) {
-        context.reportStatistics(stats)
-        stats = KotlinStatistics()
     }
 
     context(context: XLintContext)

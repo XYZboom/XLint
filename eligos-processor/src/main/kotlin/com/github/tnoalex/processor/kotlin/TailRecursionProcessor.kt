@@ -1,52 +1,39 @@
 package com.github.tnoalex.processor.kotlin
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.OptimizedTailRecursionIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.referenceExpressionSelfOrInChildren
 import com.github.tnoalex.processor.utils.startLine
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
 import com.intellij.psi.util.PsiTreeUtil
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.slf4j.LoggerFactory
 
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class TailRecursionProcessor : IssueProcessor, IKotlinProcessor {
+class TailRecursionProcessor : IKotlinProcessor {
     override val severity: Severity
         get() = Severity.SUGGESTION
     override val supportLanguage: List<Language>
-        get() = listOf(KotlinLanguage)
+        get() = listOf(KotlinLanguage.INSTANCE)
 
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        process(file as PsiFile)
-    }
-
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
         if (context.confidenceLevel <= OptimizedTailRecursionIssue.normal) {
-            (psiFile as KtFile).accept(object : KtTreeVisitorVoid() {
+            file.accept(object : KtTreeVisitorVoid() {
                 override fun visitNamedFunction(function: KtNamedFunction) {
                     if (function.hasModifier(KtTokens.TAILREC_KEYWORD)) return super.visitNamedFunction(function)
                     val isTailRecursion = findRecursion(function)
                     if (isTailRecursion) {
                         context.reportIssue(
                             OptimizedTailRecursionIssue(
-                                psiFile.virtualFilePath,
+                                file.virtualFilePath,
                                 function.fqName?.asString() ?: let {
                                     logger.nameCanNotResolveWarn("function", function)
                                     "unknown func"

@@ -1,3 +1,4 @@
+/*
 package com.github.tnoalex.processor.common.java
 
 import com.github.tnoalex.foundation.bean.Component
@@ -38,4 +39,4 @@ class JavaTooManyParametersProcessor : SubProcessor {
             }
         }
     }
-}
+}*/

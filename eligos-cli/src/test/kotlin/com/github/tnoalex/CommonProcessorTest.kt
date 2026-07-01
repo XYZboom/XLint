@@ -1,34 +1,54 @@
 package com.github.tnoalex
 
-import com.github.tnoalex.events.AllFileParsedEvent
-import com.github.tnoalex.foundation.EligosBeforeAllTestExtension
-import com.github.tnoalex.foundation.RequireTestProcessor
 import com.github.tnoalex.issues.common.CircularReferencesIssue
-import com.github.tnoalex.issues.common.ExcessiveParamsIssue
-import com.github.tnoalex.issues.common.UnusedImportIssue
-import com.github.tnoalex.processor.common.CircularReferencesProcessorOld
-import com.github.tnoalex.processor.common.TooManyParametersProcessorOld
-import com.github.tnoalex.processor.common.UnUsedImportProcessorOld
-import com.github.tnoalex.processor.common.java.JavaCircularReferencesProcessor
-import com.github.tnoalex.processor.common.java.JavaTooManyParametersProcessor
-import com.github.tnoalex.processor.common.java.JavaUnUsedImportProcessor
-import com.github.tnoalex.processor.common.kotlin.KotlinCircularReferencesProcessor
-import com.github.tnoalex.processor.common.kotlin.KotlinTooManyParametersProcessor
-import com.github.tnoalex.processor.common.kotlin.KotlinUnUsedImportProcessor
-import com.github.tnoalex.processor.common.providers.CircularReferencesProcessorProvider
-import com.github.tnoalex.processor.common.providers.TooManyParametersProcessorProvider
-import com.github.tnoalex.processor.common.providers.UnUsedImportProcessorProvider
+import com.github.tnoalex.processor.common.CircularReferencesProcessor
+import com.intellij.psi.PsiJavaFile
+import io.github.xyzboom.xlint.processor.IJavaProcessor
+import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
 import java.util.*
 
 @Execution(ExecutionMode.SAME_THREAD)
-@ExtendWith(EligosBeforeAllTestExtension::class)
 class CommonProcessorTest {
 
+    @Test
+    fun testCircularReferences() {
+        runWithCompilerEnv("resources@circularRceferences") { env ->
+            val processor = CircularReferencesProcessor()
+            for (psiFile in env.allSourceFiles) {
+                when (psiFile) {
+                    is PsiJavaFile -> (processor as IJavaProcessor).process(psiFile)
+                    is KtFile -> (processor as IKotlinProcessor).process(psiFile)
+                }
+            }
+            processor.onAfterProcess()
+            val issues = collectIssues<CircularReferencesIssue>(this)
+            assertEquals(2, issues.size)
+            var result = issues.firstOrNull {
+                it.affectedFiles.all { f -> f.contains("pkg0") }
+            }?.refMatrix?.second?.toTypedArray()
+            result?.let { Arrays.sort(it, Comparator.comparing { list -> list.joinToString() }) }
+            assertArrayEquals(
+                arrayOf(arrayListOf(0, 1), arrayListOf(1, 0)),
+                result
+            )
+            result = issues.firstOrNull {
+                it.affectedFiles.all { f -> f.contains("pkg1") }
+            }?.refMatrix?.second?.toTypedArray()
+            result?.let { Arrays.sort(it, Comparator.comparing { list -> list.joinToString() }) }
+            assertArrayEquals(
+                arrayOf(arrayListOf(0, 0, 1), arrayListOf(0, 1, 0), arrayListOf(1, 0, 0)),
+                result
+            )
+        }
+    }
+
+    /*
     @RequireTestProcessor(
         "resources@toomanyParams",
         [TooManyParametersProcessorProvider::class, KotlinTooManyParametersProcessor::class, JavaTooManyParametersProcessor::class]
@@ -105,4 +125,5 @@ class CommonProcessorTest {
             }?.unusedImports?.toTypedArray()
         )
     }
+     */
 }

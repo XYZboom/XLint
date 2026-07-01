@@ -1,52 +1,40 @@
 package com.github.tnoalex.processor.kotlin
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.CompareDataObjectWithReferenceIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import io.github.xyzboom.xlint.visitor.KtXLintTreeVisitorVoid
+import io.github.xyzboom.xlint.visitor.analyze
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.slf4j.LoggerFactory
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class CompareDataObjectWithReferenceProcessor : IssueProcessor, IKotlinProcessor {
+class CompareDataObjectWithReferenceProcessor : IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
-        get() = listOf(KotlinLanguage)
+        get() = listOf(KotlinLanguage.INSTANCE)
 
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile.accept(compareExpressionVisitor)
-    }
-
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        file.accept(compareExpressionVisitor)
+        file.accept(CompareExpressionVisitor(context))
     }
 
-    private val compareExpressionVisitor = object : KtTreeVisitorVoid() {
+    private  class CompareExpressionVisitor(context: XLintContext) : KtXLintTreeVisitorVoid(context) {
         override fun visitBinaryExpression(expression: KtBinaryExpression) {
             val left = expression.left ?: return super.visitBinaryExpression(expression)
             val operator = expression.operationToken
@@ -74,18 +62,18 @@ class CompareDataObjectWithReferenceProcessor : IssueProcessor, IKotlinProcessor
         }
     }
 
-    private fun KaSession.getTargetIfIsDataObject(expr: KtExpression): KaVariableSymbol? {
-        val ref = expr.mainReference ?: return null
-        val symbol = ref.resolveToSymbol()
-        if (symbol !is KaVariableSymbol) return null
-        val typeSymbol = symbol.returnType.symbol as? KaClassSymbol ?: return null
-        if (typeSymbol.classKind.isObject) {
-            return symbol
-        }
-        return null
-    }
-
     companion object {
         private val logger = LoggerFactory.getLogger(CompareDataObjectWithReferenceProcessor::class.java)
+
+        private fun KaSession.getTargetIfIsDataObject(expr: KtExpression): KaVariableSymbol? {
+            val ref = expr.mainReference ?: return null
+            val symbol = ref.resolveToSymbol()
+            if (symbol !is KaVariableSymbol) return null
+            val typeSymbol = symbol.returnType.symbol as? KaClassSymbol ?: return null
+            if (typeSymbol.classKind.isObject) {
+                return symbol
+            }
+            return null
+        }
     }
 }

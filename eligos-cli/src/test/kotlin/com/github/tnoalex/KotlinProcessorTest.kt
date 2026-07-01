@@ -1,122 +1,108 @@
 package com.github.tnoalex
 
-import com.github.tnoalex.foundation.EligosBeforeAllTestExtension
-import com.github.tnoalex.foundation.RequireTestProcessor
 import com.github.tnoalex.issues.kotlin.*
 import com.github.tnoalex.processor.kotlin.*
-import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
+import org.junit.jupiter.api.Test
 
-@Execution(ExecutionMode.SAME_THREAD)
-@ExtendWith(EligosBeforeAllTestExtension::class)
 class KotlinProcessorTest {
 
-    @RequireTestProcessor("resources@implicitSingleExprFunction")
-    fun testImplicitSingleExprFunction(processor: ImplicitSingleExprFunctionProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testImplicitSingleExprFunction() {
+        runWithCompilerEnv("resources@implicitSingleExprFunction") { env ->
+            val processor = ImplicitSingleExprFunctionProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<ImplicitSingleExprFunctionIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>(6, "fun test0() = java.lang.String.valueOf(1)"),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.startLine, it.content)
+                }
+            )
         }
-        val implicitSingleExprFunctionIssues = issue<ImplicitSingleExprFunctionIssue>()
-        assertEquals(1, implicitSingleExprFunctionIssues.size)
-        assertArrayEquals(
-            arrayOf<Any?>(6, "fun test0() = java.lang.String.valueOf(1)"),
-            implicitSingleExprFunctionIssues.firstOrNull()?.let {
-                arrayOf<Any?>(it.startLine, it.content)
-            }
-        )
     }
 
-    @RequireTestProcessor("resources@complexMethods")
-    fun testKotlinMccabeComplexity(processor: KotlinMccabeComplexityProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testKotlinMccabeComplexity() {
+        runWithCompilerEnv("resources@complexMethods") { env ->
+            val processor = KotlinMccabeComplexityProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<ComplexKotlinFunctionIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf(10, 17),
+                issues.firstOrNull()?.let {
+                    arrayOf(it.circleComplexity, it.startLine)
+                }
+            )
         }
-        val complexityIssues = issue<ComplexKotlinFunctionIssue>()
-        assertEquals(1, complexityIssues.size)
-        assertArrayEquals(
-            arrayOf(10, 17),
-            complexityIssues.firstOrNull()?.let {
-                arrayOf(it.circleComplexity, it.startLine)
-            }
-        )
     }
 
-    @RequireTestProcessor("resources@objectExtendsThrowable")
-    fun testObjectExtendsThrowable(processor: ObjectExtendsThrowableProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testObjectExtendsThrowable() {
+        runWithCompilerEnv("resources@objectExtendsThrowable") { env ->
+            val processor = ObjectExtendsThrowableProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<ObjectExtendsThrowableIssue>(this)
+            assertEquals(1, issues.size)
+            assertEquals(
+                "objectExtendsThrowable.ExtendsThrowable",
+                issues.firstOrNull()?.objectFqName
+            )
         }
-        val throwableIssues = issue<ObjectExtendsThrowableIssue>()
-        assertEquals(1, throwableIssues.size)
-        assertEquals(
-            "objectExtendsThrowable.ExtendsThrowable",
-            throwableIssues.firstOrNull()?.objectFqName
-        )
     }
 
-    @RequireTestProcessor("resources@optimizedTailRecursion")
-    fun testOptimizedTailRecursion(processor: TailRecursionProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testOptimizedTailRecursion() {
+        runWithCompilerEnv("resources@optimizedTailRecursion") { env ->
+            val processor = TailRecursionProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<OptimizedTailRecursionIssue>(this)
+            assertEquals(2, issues.size)
+            assertEquals(
+                "optimizedTailRecursion.factorial0(n,acc)",
+                issues.firstOrNull { it.startLine == 3 }
+                    ?.functionSignature
+            )
+            assertEquals(
+                "optimizedTailRecursion.factorial4(n,acc)",
+                issues.firstOrNull { it.startLine == 32 }
+                    ?.functionSignature
+            )
         }
-        val optimizedRecursionIssues = issue<OptimizedTailRecursionIssue>()
-        assertEquals(2, optimizedRecursionIssues.size)
-        assertEquals(
-            "optimizedTailRecursion.factorial0(n,acc)",
-            optimizedRecursionIssues.firstOrNull { it.startLine == 3 }
-                ?.functionSignature
-        )
-        assertEquals(
-            "optimizedTailRecursion.factorial4(n,acc)",
-            optimizedRecursionIssues.firstOrNull { it.startLine == 32 }
-                ?.functionSignature
-        )
     }
 
-    @RequireTestProcessor("resources@whenInsteadOfCascadeIf")
-    fun testWhenInsteadOfCascadeIf(processor: WhenInsteadOfCascadeIfProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testWhenInsteadOfCascadeIf() {
+        runWithCompilerEnv("resources@whenInsteadOfCascadeIf") { env ->
+            val processor = WhenInsteadOfCascadeIfProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<WhenInsteadOfCascadeIfIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf(4, 4),
+                issues.firstOrNull()?.let {
+                    arrayOf(it.startLine, it.cascadeDepth)
+                }
+            )
         }
-        val whenInsteadOfCascadeIf = issue<WhenInsteadOfCascadeIfIssue>()
-        assertEquals(1, whenInsteadOfCascadeIf.size)
-        assertArrayEquals(
-            arrayOf(4, 4),
-            whenInsteadOfCascadeIf.firstOrNull()?.let {
-                arrayOf(it.startLine, it.cascadeDepth)
-            }
-        )
     }
 
-    @RequireTestProcessor("resources@compareDataObjectWithReference")
-    fun testCompareDataObjectWithReference(processor: CompareDataObjectWithReferenceProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testCompareDataObjectWithReference() {
+        runWithCompilerEnv("resources@compareDataObjectWithReference") { env ->
+            val processor = CompareDataObjectWithReferenceProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<CompareDataObjectWithReferenceIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>("rdobject", "dobject", 8),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.leftPropertyFqName, it.rightPropertyFqName, it.startLine)
+                }
+            )
         }
-        val compareDataObjectWithReferenceIssue = issue<CompareDataObjectWithReferenceIssue>()
-        assertEquals(1, compareDataObjectWithReferenceIssue.size)
-        assertArrayEquals(arrayOf<Any?>(
-            "rdobject",
-            "dobject",
-            8),
-            compareDataObjectWithReferenceIssue.firstOrNull()?.let {
-            arrayOf<Any?>(it.leftPropertyFqName, it.rightPropertyFqName, it.startLine)
-        })
     }
 }

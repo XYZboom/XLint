@@ -1,3 +1,4 @@
+/*
 package com.github.tnoalex.processor.common
 
 import com.github.tnoalex.config.InjectConfig
@@ -48,4 +49,4 @@ class TooManyParametersProcessorOld : AbstractCommonProcessor() {
         internal val shareArity: Int
             get() = arity
     }
-}
+}*/

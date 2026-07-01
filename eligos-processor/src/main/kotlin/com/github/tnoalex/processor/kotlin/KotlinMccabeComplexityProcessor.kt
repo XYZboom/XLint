@@ -1,46 +1,34 @@
 package com.github.tnoalex.processor.kotlin
 
 import com.github.tnoalex.config.InjectConfig
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.ComplexKotlinFunctionIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.slf4j.LoggerFactory
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class KotlinMccabeComplexityProcessor : IssueProcessor, IKotlinProcessor {
+class KotlinMccabeComplexityProcessor : IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
-        get() = listOf(KotlinLanguage)
+        get() = listOf(KotlinLanguage.INSTANCE)
 
+    // todo: migrate this
     @InjectConfig("function.maxCyclomaticComplexity")
     private var maxCyclomaticComplexity = 0
     private var currentComplexity = 1
 
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        process(file as PsiFile)
-    }
-
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile.accept(object : KtTreeVisitorVoid() {
+        file.accept(object : KtTreeVisitorVoid() {
             override fun visitNamedFunction(function: KtNamedFunction) {
                 function.accept(ktCComplexityVisitor)
                 if (currentComplexity >= maxCyclomaticComplexity) {
@@ -48,12 +36,12 @@ class KotlinMccabeComplexityProcessor : IssueProcessor, IKotlinProcessor {
                         ComplexKotlinFunctionIssue(
                             function.containingKtFile.virtualFilePath,
                             function.fqName?.asString() ?: let {
-                              logger.nameCanNotResolveWarn("function",function)
+                                logger.nameCanNotResolveWarn("function",function)
                                 "unknown func"
                             },
                             function.valueParameters.map {
                                 it.name ?: let {
-                                   logger.nameCanNotResolveWarn("parameter",function)
+                                    logger.nameCanNotResolveWarn("parameter",function)
                                     ""
                                 }
                             },

@@ -1,51 +1,37 @@
 package com.github.tnoalex.processor.kotlin.withJava
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.JavaLanguage
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.withJava.internalExpose.JavaExtendOrImplInternalKotlinIssue
 import com.github.tnoalex.issues.kotlin.withJava.internalExpose.JavaParameterInternalKotlinIssue
 import com.github.tnoalex.issues.kotlin.withJava.internalExpose.JavaReturnInternalKotlinIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.*
-import com.github.tnoalex.processor.utils.filePath
-import com.github.tnoalex.processor.utils.kotlinOriginCanNotResolveWarn
-import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.util.PsiTreeUtil
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
-import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import io.github.xyzboom.xlint.processor.IJavaProcessor
+import io.github.xyzboom.xlint.visitor.JavaXLintRecursiveElementVisitor
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtFile
 import org.slf4j.LoggerFactory
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class InternalExposedProcessor : IssueProcessor, IKotlinProcessor {
+class InternalExposedProcessor : IJavaProcessor {
     override val severity: Severity = Severity.CODE_SMELL
-    override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
+    override val supportLanguage: List<Language>
+        get() = listOf(JavaLanguage.INSTANCE, KotlinLanguage.INSTANCE)
 
-    @EventListener(filterClazz = [PsiJavaFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile.accept(javaClassVisitor)
+    context(context: XLintContext)
+    override fun process(file: PsiJavaFile) {
+        file.accept(JavaClassVisitor(context))
     }
 
-    context(_: XLintContext)
-    override fun process(file: KtFile) {
-        file.accept(javaClassVisitor)
-    }
-
-    private val javaClassVisitor = object : JavaRecursiveElementVisitor() {
+    private class JavaClassVisitor(context: XLintContext) : JavaXLintRecursiveElementVisitor(context) {
         override fun visitMethod(method: PsiMethod) {
             if (!isAllPublic(method)) return
             checkMethodReturnType(method)
@@ -167,16 +153,16 @@ class InternalExposedProcessor : IssueProcessor, IKotlinProcessor {
         }
     }
 
-    private fun isAllPublic(element: PsiModifierListOwner): Boolean {
-        if (!element.hasModifier(JvmModifier.PUBLIC)) return false
-        val parent = PsiTreeUtil.getParentOfType(element, PsiClass::class.java)
-        return if (parent == null) true
-        else {
-            parent.hasModifier(JvmModifier.PUBLIC) && isAllPublic(parent)
-        }
-    }
-
     companion object {
+        private fun isAllPublic(element: PsiModifierListOwner): Boolean {
+            if (!element.hasModifier(JvmModifier.PUBLIC)) return false
+            val parent = PsiTreeUtil.getParentOfType(element, PsiClass::class.java)
+            return if (parent == null) true
+            else {
+                parent.hasModifier(JvmModifier.PUBLIC) && isAllPublic(parent)
+            }
+        }
+
         @JvmStatic
         private val logger = LoggerFactory.getLogger(InternalExposedProcessor::class.java)
     }

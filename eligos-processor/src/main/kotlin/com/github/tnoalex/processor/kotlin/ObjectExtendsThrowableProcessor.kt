@@ -1,48 +1,36 @@
 package com.github.tnoalex.processor.kotlin
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.ObjectExtendsThrowableIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.superTypes
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import io.github.xyzboom.xlint.visitor.KtXLintTreeVisitorVoid
+import io.github.xyzboom.xlint.visitor.analyze
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.slf4j.LoggerFactory
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class ObjectExtendsThrowableProcessor : IssueProcessor, IKotlinProcessor {
+class ObjectExtendsThrowableProcessor : IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
-        get() = listOf(KotlinLanguage)
+        get() = listOf(KotlinLanguage.INSTANCE)
 
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile.accept(objectVisitor)
-    }
-
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        file.accept(objectVisitor)
+        file.accept(ObjectVisitor(context))
     }
 
-    private val objectVisitor = object : KtTreeVisitorVoid() {
+    private class ObjectVisitor(context: XLintContext) : KtXLintTreeVisitorVoid(context) {
 
         override fun visitObjectDeclaration(declaration: KtObjectDeclaration) {
             if (declaration.isCompanion()) return super.visitObjectDeclaration(declaration)
