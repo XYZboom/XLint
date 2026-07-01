@@ -1,45 +1,37 @@
 package com.github.tnoalex.processor.kotlin
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.ImplicitSingleExprFunctionIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.nameCanNotResolveWarn
 import com.github.tnoalex.processor.utils.startLine
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
 import com.intellij.psi.util.PsiTreeUtil
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
-import org.jetbrains.kotlin.psi.*
+import io.github.xyzboom.xlint.visitor.KtXLintTreeVisitorVoid
+import io.github.xyzboom.xlint.visitor.analyze
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.slf4j.LoggerFactory
 
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class ImplicitSingleExprFunctionProcessor : IssueProcessor, IKotlinProcessor {
+class ImplicitSingleExprFunctionProcessor : IKotlinProcessor {
     override val severity: Severity
         get() = Severity.CODE_SMELL
     override val supportLanguage: List<Language>
-        get() = listOf(KotlinLanguage)
+        get() = listOf(KotlinLanguage.INSTANCE)
 
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile.accept(singleExprFunctionVisitor)
-    }
-
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        file.accept(singleExprFunctionVisitor)
+        file.accept(SingleExprFunctionVisitor(context))
     }
 
-    private val singleExprFunctionVisitor = object : KtTreeVisitorVoid(){
+    private class SingleExprFunctionVisitor(context: XLintContext) : KtXLintTreeVisitorVoid(context) {
         override fun visitNamedFunction(function: KtNamedFunction) {
             if (PsiTreeUtil.getChildOfType(
                     function,

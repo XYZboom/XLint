@@ -1,3 +1,4 @@
+/*
 package com.github.tnoalex.processor.common.kotlin
 
 import com.github.tnoalex.foundation.bean.Component
@@ -54,4 +55,4 @@ class KotlinTooManyParametersProcessor : SubProcessor {
     companion object {
         private val logger = LoggerFactory.getLogger(KotlinTooManyParametersProcessor::class.java)
     }
-}
+}*/

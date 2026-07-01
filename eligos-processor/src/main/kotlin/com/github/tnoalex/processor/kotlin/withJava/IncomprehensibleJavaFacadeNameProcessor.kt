@@ -1,54 +1,41 @@
 package com.github.tnoalex.processor.kotlin.withJava
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.JavaLanguage
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.withJava.IncomprehensibleJavaFacadeNameIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class IncomprehensibleJavaFacadeNameProcessor : IssueProcessor, IKotlinProcessor {
+class IncomprehensibleJavaFacadeNameProcessor : IKotlinProcessor {
     override val severity: Severity = Severity.SUGGESTION
-    override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
+    override val supportLanguage: List<Language>
+        get() = listOf(JavaLanguage.INSTANCE, KotlinLanguage.INSTANCE)
 
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        process(file as PsiFile)
-    }
-
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile as KtFile
-        analyze {
-            val javaFacadeName = psiFile.javaFileFacadeFqName.shortName().asString()
+        context.analyze {
+            val javaFacadeName = file.javaFileFacadeFqName.shortName().asString()
             if (!javaFacadeName.endsWith("Kt")) return@analyze
-            val namedFunctions = psiFile.getChildrenOfType<KtNamedFunction>()
+            val namedFunctions = file.getChildrenOfType<KtNamedFunction>()
                 .filter { it.symbol.visibility == KaSymbolVisibility.PUBLIC }
-            val ktProperties = psiFile.getChildrenOfType<KtProperty>()
+            val ktProperties = file.getChildrenOfType<KtProperty>()
                 .filter { it.symbol.visibility == KaSymbolVisibility.PUBLIC }
             if (namedFunctions.isEmpty() && ktProperties.isEmpty()) return@analyze
 
             context.reportIssue(
                 IncomprehensibleJavaFacadeNameIssue(
-                    psiFile.filePath,
+                    file.filePath,
                     javaFacadeName,
                     ktProperties.isNotEmpty(),
                     namedFunctions.isNotEmpty()

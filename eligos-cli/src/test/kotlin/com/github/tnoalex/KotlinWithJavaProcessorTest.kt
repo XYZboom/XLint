@@ -1,8 +1,5 @@
 package com.github.tnoalex
 
-import com.github.tnoalex.foundation.ApplicationContext
-import com.github.tnoalex.foundation.EligosBeforeAllTestExtension
-import com.github.tnoalex.foundation.RequireTestProcessor
 import com.github.tnoalex.issues.ConfidenceLevel
 import com.github.tnoalex.issues.kotlin.withJava.*
 import com.github.tnoalex.issues.kotlin.withJava.internalExpose.JavaExtendOrImplInternalKotlinIssue
@@ -11,88 +8,91 @@ import com.github.tnoalex.issues.kotlin.withJava.internalExpose.JavaReturnIntern
 import com.github.tnoalex.issues.kotlin.withJava.nonnullAssertion.NonNullAssertionOnNullableTypeIssue
 import com.github.tnoalex.issues.kotlin.withJava.nonnullAssertion.NonNullAssertionOnPlatformTypeIssue
 import com.github.tnoalex.processor.kotlin.withJava.*
-import com.intellij.psi.PsiJavaFile
-import io.github.xyzboom.xlint.IContext
-import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.extension.ExtendWith
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
+import org.junit.jupiter.api.Test
 
-@Execution(ExecutionMode.SAME_THREAD)
-@ExtendWith(EligosBeforeAllTestExtension::class)
 class KotlinWithJavaProcessorTest {
 
-    @RequireTestProcessor("resources@ignoreException")
-    fun testIgnoredException(processor: IgnoredExceptionProcessor) {
-        psiFiles().forEach { psiFile ->
-            processor.process(psiFile)
+    @Test
+    fun testIgnoredException() {
+        runWithCompilerEnv("resources@ignoreException") { env ->
+            val processor = IgnoredExceptionProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<IgnoredExceptionIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>(8, "java.io.IOException", true),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.startLine, it.ignoredExceptions, it.calledByJava)
+                }
+            )
         }
-        val ignoredExceptionIssue = issue<IgnoredExceptionIssue>()
-        assertEquals(1, ignoredExceptionIssue.size)
-        assertArrayEquals(arrayOf<Any?>(8, "java.io.IOException", true), ignoredExceptionIssue.firstOrNull()?.let {
-            arrayOf<Any?>(it.startLine, it.ignoredExceptions, it.calledByJava)
-        })
     }
 
-    @RequireTestProcessor("resources@incomprehensibleJavaFacadeName")
-    fun testIncomprehensibleJavaFacadeName(processor: IncomprehensibleJavaFacadeNameProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testIncomprehensibleJavaFacadeName() {
+        runWithCompilerEnv("resources@incomprehensibleJavaFacadeName") { env ->
+            val processor = IncomprehensibleJavaFacadeNameProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<IncomprehensibleJavaFacadeNameIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>(true, true, "IncomprehensibleClassNameKt"),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.hasTopLevelFunction, it.hasTopLevelProperty, it.javaFacadeName)
+                }
+            )
         }
-        val incomprehensibleJavaFacadeNameIssue = issue<IncomprehensibleJavaFacadeNameIssue>()
-        assertEquals(1, incomprehensibleJavaFacadeNameIssue.size)
-        assertArrayEquals(arrayOf<Any?>(true, true, "IncomprehensibleClassNameKt"),
-            incomprehensibleJavaFacadeNameIssue.firstOrNull()?.let {
-                arrayOf<Any?>(it.hasTopLevelFunction, it.hasTopLevelProperty, it.javaFacadeName)
-            })
     }
 
-    @RequireTestProcessor("resources@internalExposed/generic")
-    fun testInternalExposedGeneric(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testInternalExposedGeneric() {
+        runWithCompilerEnv("resources@internalExposed/generic") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaExtendOrImplInternalKotlinIssue>(this)
+            assertEquals(1, issues.size)
+            val issue = issues.single()
+            assertEquals(
+                hashSetOf("A.java", "KtInternal.kt"),
+                issue.affectedFiles.map { it.split("/").last() }.toHashSet()
+            )
+            assertEquals(hashSetOf("KtInternal", "IKtInternal0"), issue.exposedTypes)
+            assertEquals("A", issue.javaClassFqName)
         }
-        val issue = issue<JavaExtendOrImplInternalKotlinIssue>().single()
-        assertEquals(
-            hashSetOf("A.java", "KtInternal.kt"),
-            issue.affectedFiles.map { it.split("/").last() }.toHashSet()
-        )
-        assertEquals(hashSetOf("KtInternal", "IKtInternal0"), issue.exposedTypes)
-        assertEquals("A", issue.javaClassFqName)
     }
 
-    @RequireTestProcessor("resources@internalExposed/normal")
-    fun testInternalExposedNormal(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testInternalExposedNormal() {
+        runWithCompilerEnv("resources@internalExposed/normal") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaExtendOrImplInternalKotlinIssue>(this)
+            assertEquals(3, issues.size)
+            assertArrayEquals(
+                arrayOf(
+                    "internaltest.java.UseInternalInJava0",
+                    "internaltest.kotlin.InternalOpenClassInKotlin"
+                ),
+                issues.firstOrNull {
+                    it.affectedFiles.find { f -> f.endsWith("UseInternalInJava0.java") } != null
+                }?.let {
+                    arrayOf(it.javaClassFqName, it.exposedTypes.single())
+                }
+            )
+            assertArrayEquals(
+                arrayOf(
+                    "internaltest.java.UseInternalInJava2",
+                    "internaltest.kotlin.InternalInterfaceInKotlin"
+                ),
+                issues.firstOrNull {
+                    it.affectedFiles.find { f -> f.endsWith("UseInternalInJava2.java") } != null
+                }?.let {
+                    arrayOf(it.javaClassFqName, it.exposedTypes.single())
+                }
+            )
         }
-        val internalExposedIssue = issue<JavaExtendOrImplInternalKotlinIssue>()
-        assertEquals(3, internalExposedIssue.size)
-        assertArrayEquals(arrayOf(
-            "internaltest.java.UseInternalInJava0",
-            "internaltest.kotlin.InternalOpenClassInKotlin"
-        ),
-            internalExposedIssue.firstOrNull {
-                it.affectedFiles.find { f -> f.endsWith("UseInternalInJava0.java") } != null
-            }?.let {
-                arrayOf(it.javaClassFqName, it.exposedTypes.single())
-            })
-        assertArrayEquals(arrayOf(
-            "internaltest.java.UseInternalInJava2",
-            "internaltest.kotlin.InternalInterfaceInKotlin"
-        ),
-            internalExposedIssue.firstOrNull {
-                it.affectedFiles.find { f -> f.endsWith("UseInternalInJava2.java") } != null
-            }?.let {
-                arrayOf(it.javaClassFqName, it.exposedTypes.single())
-            })
     }
 
     private fun assertJavaParameterInternalKotlinIssue1(issue: JavaParameterInternalKotlinIssue) {
@@ -113,219 +113,212 @@ class KotlinWithJavaProcessorTest {
         assertEquals(8, issue.startLine)
     }
 
-    @RequireTestProcessor("resources@javaParameterInternalKotlin/nestedGeneric")
-    fun testJavaParameterInternalKotlinNestedGeneric(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
+    @Test
+    fun testJavaParameterInternalKotlinNestedGeneric() {
+        runWithCompilerEnv("resources@javaParameterInternalKotlin/nestedGeneric") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaParameterInternalKotlinIssue>(this)
+            assertEquals(2, issues.size)
+            assertTrue(issues.all { it.affectedFiles.size == 2 && it.javaClassFqName == "JavaClass" })
+            val issue0 = issues[0]
+            val issue1 = issues[1]
+            if (issue0.javaMethodName == "func") {
+                assertJavaParameterInternalKotlinIssue1(issue0)
+                assertJavaParameterInternalKotlinIssue2(issue1)
+            } else {
+                assertJavaParameterInternalKotlinIssue1(issue1)
+                assertJavaParameterInternalKotlinIssue2(issue0)
             }
-        }
-        val issues = issue<JavaParameterInternalKotlinIssue>()
-        assertEquals(2, issues.size)
-        assertTrue(issues.all { it.affectedFiles.size == 2 && it.javaClassFqName == "JavaClass" })
-        val issue0 = issues[0]
-        val issue1 = issues[1]
-        if (issue0.javaMethodName == "func") {
-            assertJavaParameterInternalKotlinIssue1(issue0)
-            assertJavaParameterInternalKotlinIssue2(issue1)
-        } else {
-            assertJavaParameterInternalKotlinIssue1(issue1)
-            assertJavaParameterInternalKotlinIssue2(issue0)
         }
     }
 
-    @RequireTestProcessor("resources@javaParameterInternalKotlin/generic")
-    fun testJavaParameterInternalKotlinGeneric(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
+    @Test
+    fun testJavaParameterInternalKotlinGeneric() {
+        runWithCompilerEnv("resources@javaParameterInternalKotlin/generic") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaParameterInternalKotlinIssue>(this)
+            assertEquals(2, issues.size)
+            assertTrue(issues.all { it.affectedFiles.size == 2 && it.javaClassFqName == "JavaClass" })
+            val issue0 = issues[0]
+            val issue1 = issues[1]
+            if (issue0.javaMethodName == "func") {
+                assertJavaParameterInternalKotlinIssue1(issue0)
+                assertJavaParameterInternalKotlinIssue2(issue1)
+            } else {
+                assertJavaParameterInternalKotlinIssue1(issue1)
+                assertJavaParameterInternalKotlinIssue2(issue0)
             }
-        }
-        val issues = issue<JavaParameterInternalKotlinIssue>()
-        assertEquals(2, issues.size)
-        assertTrue(issues.all { it.affectedFiles.size == 2 && it.javaClassFqName == "JavaClass" })
-        val issue0 = issues[0]
-        val issue1 = issues[1]
-        if (issue0.javaMethodName == "func") {
-            assertJavaParameterInternalKotlinIssue1(issue0)
-            assertJavaParameterInternalKotlinIssue2(issue1)
-        } else {
-            assertJavaParameterInternalKotlinIssue1(issue1)
-            assertJavaParameterInternalKotlinIssue2(issue0)
         }
     }
 
-    @RequireTestProcessor("resources@javaParameterInternalKotlin/normal")
-    fun testJavaParameterInternalKotlinNormal(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
+    @Test
+    fun testJavaParameterInternalKotlinNormal() {
+        runWithCompilerEnv("resources@javaParameterInternalKotlin/normal") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaParameterInternalKotlinIssue>(this)
+            assertEquals(2, issues.size)
+            assertTrue(issues.all { it.affectedFiles.size == 2 && it.javaClassFqName == "JavaClass" })
+            val issue0 = issues[0]
+            val issue1 = issues[1]
+            if (issue0.javaMethodName == "func") {
+                assertJavaParameterInternalKotlinIssue1(issue0)
+                assertJavaParameterInternalKotlinIssue2(issue1)
+            } else {
+                assertJavaParameterInternalKotlinIssue1(issue1)
+                assertJavaParameterInternalKotlinIssue2(issue0)
             }
-        }
-        val issues = issue<JavaParameterInternalKotlinIssue>()
-        assertEquals(2, issues.size)
-        assertTrue(issues.all { it.affectedFiles.size == 2 && it.javaClassFqName == "JavaClass" })
-        val issue0 = issues[0]
-        val issue1 = issues[1]
-        if (issue0.javaMethodName == "func") {
-            assertJavaParameterInternalKotlinIssue1(issue0)
-            assertJavaParameterInternalKotlinIssue2(issue1)
-        } else {
-            assertJavaParameterInternalKotlinIssue1(issue1)
-            assertJavaParameterInternalKotlinIssue2(issue0)
         }
     }
 
-    @RequireTestProcessor("resources@javaReturnInternalKotlin/generic")
-    fun testJavaReturnInternalKotlinGeneric(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testJavaReturnInternalKotlinGeneric() {
+        runWithCompilerEnv("resources@javaReturnInternalKotlin/generic") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaReturnInternalKotlinIssue>(this)
+            val issue = issues.single()
+            assertEquals(hashSetOf("KtInternal"), issue.kotlinClassFqNames)
+            assertEquals("func", issue.javaMethodName)
+            assertEquals("JavaReturn", issue.javaClassFqName)
+            assertEquals(2, issue.startLine)
         }
-        val javaReturnKotlinIssues = issue<JavaReturnInternalKotlinIssue>()
-        val issue = javaReturnKotlinIssues.single()
-        assertEquals(hashSetOf("KtInternal"), issue.kotlinClassFqNames)
-        assertEquals("func", issue.javaMethodName)
-        assertEquals("JavaReturn", issue.javaClassFqName)
-        assertEquals(2, issue.startLine)
     }
 
-    @RequireTestProcessor("resources@javaReturnInternalKotlin/normal")
-    fun testJavaReturnInternalKotlinNormal(processor: InternalExposedProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testJavaReturnInternalKotlinNormal() {
+        runWithCompilerEnv("resources@javaReturnInternalKotlin/normal") { env ->
+            val processor = InternalExposedProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<JavaReturnInternalKotlinIssue>(this)
+            val issue = issues.single()
+            assertEquals(hashSetOf("KtInternal"), issue.kotlinClassFqNames)
+            assertEquals("func", issue.javaMethodName)
+            assertEquals("JavaReturn", issue.javaClassFqName)
+            assertEquals(2, issue.startLine)
         }
-        val javaReturnKotlinIssues = issue<JavaReturnInternalKotlinIssue>()
-        val issue = javaReturnKotlinIssues.single()
-        assertEquals(hashSetOf("KtInternal"), issue.kotlinClassFqNames)
-        assertEquals("func", issue.javaMethodName)
-        assertEquals("JavaReturn", issue.javaClassFqName)
-        assertEquals(2, issue.startLine)
     }
 
-    @RequireTestProcessor("resources@nonJvmFieldCompanionValue")
-    fun testNonJVMFieldCompanionValue(processor: NonJVMFieldCompanionValueProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testNonJVMFieldCompanionValue() {
+        runWithCompilerEnv("resources@nonJvmFieldCompanionValue") { env ->
+            val processor = NonJVMFieldCompanionValueProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<NonJVMFieldCompanionValueIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>("nonJvmFieldCompanionValue.Test.Companion.strts", 6),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.propertyName, it.startLine)
+                }
+            )
         }
-        val nonJVMFieldCompanionValueIssue = issue<NonJVMFieldCompanionValueIssue>()
-        assertEquals(1, nonJVMFieldCompanionValueIssue.size)
-        assertArrayEquals(arrayOf<Any?>("nonJvmFieldCompanionValue.Test.Companion.strts", 6),
-            nonJVMFieldCompanionValueIssue.firstOrNull()?.let {
-                arrayOf<Any?>(it.propertyName, it.startLine)
-            })
     }
 
-    @RequireTestProcessor("resources@nonJVMStaticCompanionFunction")
-    fun testNonJVMStaticCompanionFunction(processor: NonJVMStaticCompanionFunctionProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testNonJVMStaticCompanionFunction() {
+        runWithCompilerEnv("resources@nonJVMStaticCompanionFunction") { env ->
+            val processor = NonJVMStaticCompanionFunctionProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<NonJVMStaticCompanionFunctionIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>("nonJVMStaticCompanionFunction.Test.Companion.test()", 5),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.functionSignature, it.startLine)
+                }
+            )
         }
-        val nonJVMStaticCompanionFunctionIssue = issue<NonJVMStaticCompanionFunctionIssue>()
-        assertEquals(1, nonJVMStaticCompanionFunctionIssue.size)
-        assertArrayEquals(arrayOf<Any?>("nonJVMStaticCompanionFunction.Test.Companion.test()", 5),
-            nonJVMStaticCompanionFunctionIssue.firstOrNull()?.let {
-                arrayOf<Any?>(it.functionSignature, it.startLine)
-            })
     }
 
-    @RequireTestProcessor("resources@provideImmutableCollection")
-    fun testProvideImmutableCollection(processor: ProvideImmutableCollectionProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is PsiJavaFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testProvideImmutableCollection() {
+        runWithCompilerEnv("resources@provideImmutableCollection") { env ->
+            val processor = ProvideImmutableCollectionProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<ProvideImmutableCollectionIssue>(this)
+            assertEquals(1, issues.size)
+            assertArrayEquals(
+                arrayOf<Any?>(
+                    "provideImmutableCollection.kotlin.pInKotlin",
+                    "provideImmutableCollection.java.UseInJava",
+                    true
+                ),
+                issues.firstOrNull()?.let {
+                    arrayOf<Any?>(it.providerKtElementFqName, it.useJavaClassFqName, it.isFunction)
+                }
+            )
         }
-        val provideImmutableCollectionIssue = issue<ProvideImmutableCollectionIssue>()
-        assertEquals(1, provideImmutableCollectionIssue.size)
-        assertArrayEquals(arrayOf<Any?>(
-            "provideImmutableCollection.kotlin.pInKotlin",
-            "provideImmutableCollection.java.UseInJava",
-            true
-        ),
-            provideImmutableCollectionIssue.firstOrNull()?.let {
-                arrayOf<Any?>(it.providerKtElementFqName, it.useJavaClassFqName, it.isFunction)
-            })
     }
 
-    @RequireTestProcessor("resources@unclearPlatformType")
-    fun testUncertainNullablePlatformType(processor: UncertainNullablePlatformTypeProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testUncertainNullablePlatformType() {
+        runWithCompilerEnv("resources@unclearPlatformType") { env ->
+            val processor = UncertainNullablePlatformTypeProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val propertyPlatformType = collectIssues<UncertainNullablePlatformTypeInPropertyIssue>(this)
+            val expressionPlatformType = collectIssues<UncertainNullablePlatformExpressionUsageIssue>(this)
+            val callerPlatformType = collectIssues<UncertainNullablePlatformCallerIssue>(this)
+            assertEquals(5, propertyPlatformType.size)
+            assertEquals(2, expressionPlatformType.size)
+            assertEquals(2, callerPlatformType.size)
         }
-        val propertyPlatformType = issue<UncertainNullablePlatformTypeInPropertyIssue>()
-        val expressionPlatformType = issue<UncertainNullablePlatformExpressionUsageIssue>()
-        val callerPlatformType = issue<UncertainNullablePlatformCallerIssue>()
-        assertEquals(5, propertyPlatformType.size)
-        assertEquals(2, expressionPlatformType.size)
-        assertEquals(2, callerPlatformType.size)
     }
 
-    @RequireTestProcessor("resources@unclearPlantformCaller")
-    fun testUncertainNullablePlatformCaller(processor: UncertainNullablePlatformTypeProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testUncertainNullablePlatformCaller() {
+        runWithCompilerEnv("resources@unclearPlantformCaller") { env ->
+            val processor = UncertainNullablePlatformTypeProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val callerPlatformType = collectIssues<UncertainNullablePlatformCallerIssue>(this)
+            assertEquals(2, callerPlatformType.size)
+            assertEquals(hashSetOf(5, 6), callerPlatformType.map { it.startLine }.toSet())
         }
-        val callerPlatformType = issue<UncertainNullablePlatformCallerIssue>()
-        assertEquals(2, callerPlatformType.size)
-        assertEquals(hashSetOf(5, 6), callerPlatformType.map { it.startLine }.toSet())
     }
 
-    @RequireTestProcessor("resources@nullablePassedToPlatformTypeParam")
-    fun testNullablePassedToPlatformTypeParam(processor: UncertainNullablePlatformTypeProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testNullablePassedToPlatformTypeParam() {
+        runWithCompilerEnv("resources@nullablePassedToPlatformTypeParam") { env ->
+            val processor = UncertainNullablePlatformTypeProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<NullablePassedToPlatformParamIssue>(this)
+            assertEquals(2, issues.size)
+            val sorted = issues.sortedBy { it.startLine }
+            val issue = sorted[0]
+            assertEquals(4, issue.startLine)
+            assertEquals(9, issue.calledFunctionStartLine)
+            assertEquals("func1", issue.calledFunctionName)
+            val issue1 = sorted[1]
+            assertEquals(5, issue1.startLine)
+            assertEquals(13, issue1.calledFunctionStartLine)
+            assertEquals("func2", issue1.calledFunctionName)
         }
-        val callerPlatformType = issue<NullablePassedToPlatformParamIssue>()
-        assertEquals(2, callerPlatformType.size)
-        val issues = callerPlatformType.sortedBy { it.startLine }
-        val issue = issues[0]
-        assertEquals(4, issue.startLine)
-        assertEquals(9, issue.calledFunctionStartLine)
-        assertEquals("func1", issue.calledFunctionName)
-        val issue1 = issues[1]
-        assertEquals(5, issue1.startLine)
-        assertEquals(13, issue1.calledFunctionStartLine)
-        assertEquals("func2", issue1.calledFunctionName)
     }
 
-    @RequireTestProcessor("resources@nonnullAssertionOnPlatformType")
-    fun testNonNullAssertionOnPlatformType(processor: UncertainNullablePlatformTypeProcessor) {
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testNonNullAssertionOnPlatformType() {
+        runWithCompilerEnv("resources@nonnullAssertionOnPlatformType") { env ->
+            val processor = UncertainNullablePlatformTypeProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issues = collectIssues<NonNullAssertionOnPlatformTypeIssue>(this)
+            val issue = issues.single()
+            assertEquals(2, issue.startLine)
+            assertEquals("A.func()!!", issue.content)
         }
-        val issue = issue<NonNullAssertionOnPlatformTypeIssue>().single()
-        assertEquals(2, issue.startLine)
-        assertEquals("A.func()!!", issue.content)
     }
 
-    @RequireTestProcessor("resources@nonnullAssertionOnNullableType")
-    fun testNonNullAssertionOnNullableType(processor: UncertainNullablePlatformTypeProcessor) {
-        ApplicationContext.getExactBean(IContext::class.java)!!.confidenceLevel =
-            ConfidenceLevel.EXTREMELY_LOW
-        psiFiles().forEach { psiFile ->
-            if (psiFile is KtFile) {
-                processor.process(psiFile)
-            }
+    @Test
+    fun testNonNullAssertionOnNullableType() {
+        runWithCompilerEnv("resources@nonnullAssertionOnNullableType") { env ->
+            confidenceLevel = ConfidenceLevel.EXTREMELY_LOW
+            val processor = UncertainNullablePlatformTypeProcessor()
+            runProcessorOnAllKtFiles(env, this, processor)
+            val issue = collectIssues<NonNullAssertionOnNullableTypeIssue>(this).single()
+            assertEquals(0, collectIssues<NonNullAssertionOnPlatformTypeIssue>(this).size)
+            assertEquals(2, issue.startLine)
+            assertEquals("A.func()!!", issue.content)
         }
-        val issue = issue<NonNullAssertionOnNullableTypeIssue>().single()
-        assertEquals(0, issue<NonNullAssertionOnPlatformTypeIssue>().size)
-        assertEquals(2, issue.startLine)
-        assertEquals("A.func()!!", issue.content)
     }
 }

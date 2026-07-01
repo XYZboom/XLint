@@ -1,45 +1,39 @@
 package com.github.tnoalex.processor.java
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.java.MissingNullabilityAnnotationIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
-import com.intellij.psi.*
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IJavaProcessor
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class MissingNullabilityAnnotationProcessor: IssueProcessor, IJavaProcessor {
+class MissingNullabilityAnnotationProcessor: IJavaProcessor {
     override val severity: Severity = Severity.SUGGESTION
+
+    override val supportLanguage: List<Language>
+        get() = listOf(JavaLanguage.INSTANCE)
 
     companion object {
         val annos = listOf("NonNull", "Nullable")
     }
 
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: PsiJavaFile) {
-        process(file as PsiFile)
-    }
-
-    @EventListener(filterClazz = [PsiJavaFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile as PsiJavaFile
-        psiFile.accept(object: JavaRecursiveElementVisitor() {
+        file.accept(object: JavaRecursiveElementVisitor() {
             override fun visitMethod(method: PsiMethod) {
                 if (method.annotations.all {
                         it.qualifiedName?.split(".")?.last() !in annos
                     }) {
                     context.reportIssue(
                         MissingNullabilityAnnotationIssue(
-                            psiFile.filePath,
+                            file.filePath,
                             method.containingClass?.qualifiedName,
                             method.name,
                             method.startLine

@@ -1,12 +1,5 @@
 package com.github.tnoalex.processor.kotlin.withJava
 
-import com.github.tnoalex.foundation.LaunchEnvironment
-import com.github.tnoalex.foundation.bean.Component
-import com.github.tnoalex.foundation.bean.Suitable
-import com.github.tnoalex.foundation.eventbus.EventListener
-import com.github.tnoalex.foundation.language.JavaLanguage
-import com.github.tnoalex.foundation.language.KotlinLanguage
-import com.github.tnoalex.foundation.language.Language
 import com.github.tnoalex.issues.ConfidenceLevel
 import com.github.tnoalex.issues.Severity
 import com.github.tnoalex.issues.kotlin.withJava.NullablePassedToPlatformParamIssue
@@ -15,14 +8,16 @@ import com.github.tnoalex.issues.kotlin.withJava.UncertainNullablePlatformExpres
 import com.github.tnoalex.issues.kotlin.withJava.UncertainNullablePlatformTypeInPropertyIssue
 import com.github.tnoalex.issues.kotlin.withJava.nonnullAssertion.NonNullAssertionOnNullableTypeIssue
 import com.github.tnoalex.issues.kotlin.withJava.nonnullAssertion.NonNullAssertionOnPlatformTypeIssue
-import com.github.tnoalex.processor.IssueProcessor
 import com.github.tnoalex.processor.utils.filePath
 import com.github.tnoalex.processor.utils.startLine
-import com.intellij.psi.PsiFile
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import io.github.xyzboom.xlint.XLintContext
 import io.github.xyzboom.xlint.annotations.Processor
 import io.github.xyzboom.xlint.processor.IKotlinProcessor
+import io.github.xyzboom.xlint.visitor.KtXLintTreeVisitorVoid
+import io.github.xyzboom.xlint.visitor.analyze
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -35,30 +30,25 @@ import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 import org.slf4j.LoggerFactory
 
-@Component
-@Suitable(LaunchEnvironment.CLI)
 @Processor
-class UncertainNullablePlatformTypeProcessor : IssueProcessor, IKotlinProcessor {
+class UncertainNullablePlatformTypeProcessor : IKotlinProcessor {
     override val severity: Severity = Severity.CODE_SMELL
-    override val supportLanguage: List<Language> = listOf(JavaLanguage, KotlinLanguage)
+    override val supportLanguage: List<Language>
+        get() = listOf(JavaLanguage.INSTANCE, KotlinLanguage.INSTANCE)
 
-    @EventListener(filterClazz = [KtFile::class])
-    override fun process(psiFile: PsiFile) {
-        psiFile.accept(kotlinPropertyVisitor)
-    }
-
-    context(_: XLintContext)
+    context(context: XLintContext)
     override fun process(file: KtFile) {
-        file.accept(kotlinPropertyVisitor)
+        file.accept(KotlinPropertyVisitor(context))
     }
 
     @OptIn(KaExperimentalApi::class)
-    private val kotlinPropertyVisitor = object : KtTreeVisitorVoid() {
+    private class KotlinPropertyVisitor(context: XLintContext) : KtXLintTreeVisitorVoid(context) {
         override fun visitCallExpression(expression: KtCallExpression) {
             if (context.confidenceLevel <= NullablePassedToPlatformParamIssue.normal) {
                 checkParameter(expression)
@@ -280,18 +270,18 @@ class UncertainNullablePlatformTypeProcessor : IssueProcessor, IKotlinProcessor 
     }
 
     companion object {
+        context(session: KaSession)
+        private fun KaType.isFlexibleRecursive(): Boolean {
+            with(session) {
+                if (hasFlexibleNullability) return true
+                if (this is KaClassType) {
+                    return typeArguments.any { it.type?.isFlexibleRecursive() == true }
+                }
+                return false
+            }
+        }
+
         @JvmStatic
         private val logger = LoggerFactory.getLogger(UncertainNullablePlatformTypeProcessor::class.java)
-    }
-
-    context(session: KaSession)
-    private fun KaType.isFlexibleRecursive(): Boolean {
-        with(session) {
-            if (hasFlexibleNullability) return true
-            if (this is KaClassType) {
-                return typeArguments.any { it.type?.isFlexibleRecursive() == true }
-            }
-            return false
-        }
     }
 }

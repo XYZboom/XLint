@@ -12,9 +12,16 @@ class XLintContext(
     override val issues = HashSet<Issue>()
     override val stats = ArrayList<Statistics>()
 
+    inline fun <R> analyze(action: KaSession.() -> R): R {
+        return session.action()
+    }
+
     override fun reportIssue(issue: Issue) {
         // check confidence level that needed
         if (confidenceLevel <= issue.confidenceLevel) {
+            // Some processors need to update the details in the issue during process,
+            // so remove the old issue first
+            issues.remove(issue)
             issues.add(issue)
         }
     }
