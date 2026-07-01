@@ -1,7 +1,5 @@
 package io.github.xyzboom.xlint
 
-import com.github.tnoalex.foundation.ApplicationContext
-import com.github.tnoalex.foundation.bean.container.SimpleSingletonBeanContainer
 import com.github.tnoalex.specs.AnalyzerSpec
 import io.github.xyzboom.xlint.compiler.ICompilerEnvContext
 import io.github.xyzboom.xlint.config.loadConfig
@@ -21,13 +19,11 @@ class XLintApplication private constructor(
         }
     }
 
-    fun run() {
+    fun run(): XLintContext {
+        var result: XLintContext? = null
         compilerEnvContext.runAnalyze {
             val context = XLintContext(this, analyzerSpec.confidenceLevel)
             val providers = ServiceLoader.load(IProcessorProvider::class.java)
-            // todo: remove this line after migrating to XLint
-            ApplicationContext.removeBean("Context")
-            ApplicationContext.addBean("Context", context, SimpleSingletonBeanContainer)
             val processors = if (analyzerSpec.debugSpec.disableAnyElse.isNotEmpty()) {
                 providers.flatMap { it.getProcessorFromNames(analyzerSpec.debugSpec.disableAnyElse) }
             } else {
@@ -58,6 +54,8 @@ class XLintApplication private constructor(
                     processor.onAfterProcess()
                 }
             }
+            result = context
         }
+        return result!!
     }
 }
