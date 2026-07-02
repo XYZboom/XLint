@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":eligos-core"))
+    implementation(project(":xlint-core"))
     implementation(project(":xlint-ksp-annotations"))
     implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")
     implementation("com.squareup:kotlinpoet:2.3.0")
