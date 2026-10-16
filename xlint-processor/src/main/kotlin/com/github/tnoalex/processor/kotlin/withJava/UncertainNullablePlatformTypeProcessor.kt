@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.analysis.api.symbols.isTopLevel
@@ -206,25 +207,15 @@ class UncertainNullablePlatformTypeProcessor : IKotlinProcessor {
                     if (callInfo !is KaSuccessCallInfo) return@analyze
                     when (val call = callInfo.call) {
                         is KaFunctionCall<*> -> {
-                            val content = if (expression.parent.expectedType != null) {
-                                expression.parent.text!!
-                            } else {
-                                expression.text
-                            }
-                            context.reportIssue(
-                                UncertainNullablePlatformExpressionUsageIssue(
-                                    expression.filePath,
-                                    content,
-                                    expression.startLine,
-                                    expectedType.toString(),
-                                    type.toString(),
-                                    expression.smartCastInfo?.smartCastType?.render(position = Variance.INVARIANT)
-                                        ?: "no smart cast"
-                                )
-                            )
+                            reportPlatformExpressionUsage(expression, expectedType, type)
                         }
 
                         is KaVariableAccessCall -> {
+                            // Java getters accessed as Kotlin properties are variable calls,
+                            // but their platform results have the same non-null use-site risk.
+                            if (call.symbol is KaSyntheticJavaPropertySymbol && !isElvisLeftOperand(expression)) {
+                                reportPlatformExpressionUsage(expression, expectedType, type)
+                            }
                             tryReportProperty(call.symbol)
                         }
 
@@ -234,6 +225,40 @@ class UncertainNullablePlatformTypeProcessor : IKotlinProcessor {
             }
         }
 
+
+        private fun isElvisLeftOperand(expression: KtExpression): Boolean {
+            var operand = expression
+            val access = operand.parent as? KtDotQualifiedExpression
+            if (access?.selectorExpression == operand) operand = access
+            while (operand.parent is KtParenthesizedExpression) {
+                operand = operand.parent as KtParenthesizedExpression
+            }
+            val parent = operand.parent as? KtBinaryExpression ?: return false
+            return parent.operationToken == KtTokens.ELVIS && parent.left == operand
+        }
+
+        private fun KaSession.reportPlatformExpressionUsage(
+            expression: KtExpression,
+            expectedType: KaType,
+            actualType: KaType
+        ) {
+            val content = if (expression.parent.expectedType != null) {
+                expression.parent.text!!
+            } else {
+                expression.text
+            }
+            context.reportIssue(
+                UncertainNullablePlatformExpressionUsageIssue(
+                    expression.filePath,
+                    content,
+                    expression.startLine,
+                    expectedType.toString(),
+                    actualType.toString(),
+                    expression.smartCastInfo?.smartCastType?.render(position = Variance.INVARIANT)
+                        ?: "no smart cast"
+                )
+            )
+        }
 
         override fun visitProperty(property: KtProperty) {
             if (property.isLocal) return super.visitProperty(property)
