@@ -288,9 +288,9 @@ fun createCompilerConfiguration(
 }
 
 fun findStdlib(): Path? {
-    return Pair::class.java.protectionDomain?.codeSource?.location?.toURI()?.path?.let { Path(it) }
+    return Pair::class.java.protectionDomain?.codeSource?.location?.toURI()?.let { Path.of(it) }
 }
 
 fun findJetbrainsAnno(): Path? {
-    return Nullable::class.java.protectionDomain?.codeSource?.location?.toURI()?.path?.let { Path(it) }
+    return Nullable::class.java.protectionDomain?.codeSource?.location?.toURI()?.let { Path.of(it) }
 }
