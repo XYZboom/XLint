@@ -60,7 +60,7 @@ class XLintTestArgumentsProvider : ArgumentsProvider {
 
     companion object {
         private val defaultJdkHome = File(System.getProperty("java.home")).toPath()
-        private val defaultKotlinLib = File(CharRange::class.java.protectionDomain.codeSource.location.path).toPath()
+        private val defaultKotlinLib = File(CharRange::class.java.protectionDomain.codeSource.location.toURI()).toPath()
         private val isWindows = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("windows")
     }
 }

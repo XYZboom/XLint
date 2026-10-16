@@ -95,4 +95,4 @@ fun resolveTestResources(resourcePath: String): String {
 }
 
 private val defaultJdkHome = File(System.getProperty("java.home")).toPath()
-private val defaultKotlinLib = File(CharRange::class.java.protectionDomain.codeSource.location.path).toPath()
+private val defaultKotlinLib = File(CharRange::class.java.protectionDomain.codeSource.location.toURI()).toPath()
