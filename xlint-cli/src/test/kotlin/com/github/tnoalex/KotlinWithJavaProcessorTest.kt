@@ -254,6 +254,19 @@ class KotlinWithJavaProcessorTest {
     }
 
     @Test
+    fun testPlatformArgumentPassedToNonNullKotlinParameter() {
+        runWithCompilerEnv("resources@platformArgumentToKotlin") { env ->
+            val processor = PlatformArgumentToNonNullKotlinParameterProcessor()
+            runProcessorOnAllJavaFiles(env, this, processor)
+            val issues = collectIssues<PlatformArgumentPassedToNonNullKotlinParamIssue>(this)
+            assertEquals(1, issues.size)
+            assertEquals("platformValue", issues.single().content)
+            assertEquals("nonNull", issues.single().kotlinFunctionName)
+            assertEquals(0, issues.single().parameterIndex)
+        }
+    }
+
+    @Test
     fun testUncertainNullablePlatformType() {
         runWithCompilerEnv("resources@unclearPlatformType") { env ->
             val processor = UncertainNullablePlatformTypeProcessor()
